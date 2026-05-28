@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NAM! — Technical Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #0f0f18;
+    --card: #13131e;
+    --card2: #1a1a28;
+    --accent: #7c6af7;
+    --accent2: #a78bfa;
+    --green: #4ade80;
+    --blue: #38bdf8;
+    --gold: #fbbf24;
+    --red: #f87171;
+    --orange: #fb923c;
+    --text: #e2e8f0;
+    --dim: #64748b;
+    --dim2: #94a3b8;
+    --border: rgba(124,106,247,0.2);
+    --border2: rgba(255,255,255,0.06);
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.7;
+    padding-bottom: 100px;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    padding: 80px 24px 70px;
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border2);
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 70% 50% at 0% 0%, rgba(124,106,247,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 50% at 100% 100%, rgba(56,189,248,0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .hero-inner { max-width: 860px; margin: 0 auto; position: relative; }
+
+  .hero-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 20px;
+    opacity: 0.8;
+  }
+
+  .hero h1 {
+    font-size: clamp(40px, 8vw, 72px);
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1.0;
+    margin-bottom: 6px;
+  }
+
+  .hero h1 span { color: var(--accent2); }
+
+  .hero-sub {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--dim2);
+    margin-bottom: 28px;
+  }
+
+  .hero-desc {
+    max-width: 600px;
+    font-size: 16px;
+    color: var(--dim2);
+    line-height: 1.8;
+    font-weight: 400;
+  }
+
+  .hero-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 28px;
+  }
+
+  .badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 4px;
+    border: 1px solid;
+  }
+
+  .badge-purple { color: var(--accent2); border-color: rgba(167,139,250,0.3); background: rgba(124,106,247,0.08); }
+  .badge-green  { color: var(--green);   border-color: rgba(74,222,128,0.3);  background: rgba(74,222,128,0.06); }
+  .badge-blue   { color: var(--blue);    border-color: rgba(56,189,248,0.3);  background: rgba(56,189,248,0.06); }
+  .badge-gold   { color: var(--gold);    border-color: rgba(251,191,36,0.3);  background: rgba(251,191,36,0.06); }
+  .badge-red    { color: var(--red);     border-color: rgba(248,113,113,0.3); background: rgba(248,113,113,0.06); }
+  .badge-orange { color: var(--orange);  border-color: rgba(251,146,60,0.3);  background: rgba(251,146,60,0.06); }
+
+  /* ── Layout ── */
+  .container { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── Section ── */
+  .section { margin-top: 64px; }
+
+  .section-eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.7;
+    margin-bottom: 8px;
+  }
+
+  .section h2 {
+    font-size: clamp(24px, 4vw, 36px);
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text);
+    margin-bottom: 16px;
+    line-height: 1.2;
+  }
+
+  .section > p {
+    color: var(--dim2);
+    font-size: 14px;
+    margin-bottom: 24px;
+    max-width: 660px;
+    line-height: 1.8;
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 16px;
+  }
+
+  .card-purple { border-color: rgba(124,106,247,0.3); }
+  .card-green  { border-color: rgba(74,222,128,0.2); }
+  .card-blue   { border-color: rgba(56,189,248,0.2); }
+  .card-gold   { border-color: rgba(251,191,36,0.2); }
+
+  .card h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card p {
+    color: var(--dim2);
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .card p + p { margin-top: 10px; }
+
+  /* ── Code blocks ── */
+  pre {
+    background: #080810;
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 18px 20px;
+    overflow-x: auto;
+    margin: 16px 0;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  .kw  { color: #c084fc; }  /* keyword */
+  .fn  { color: #60a5fa; }  /* function */
+  .str { color: #4ade80; }  /* string */
+  .cm  { color: #475569; font-style: italic; }  /* comment */
+  .num { color: #fb923c; }  /* number */
+  .cn  { color: #f0abfc; }  /* const/var name */
+  .op  { color: #94a3b8; }  /* operator */
+
+  code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: rgba(124,106,247,0.1);
+    color: var(--accent2);
+    padding: 2px 7px;
+    border-radius: 4px;
+  }
+
+  /* ── Architecture diagram boxes ── */
+  .arch {
+    display: grid;
+    gap: 2px;
+    margin: 20px 0;
+  }
+
+  .arch-row {
+    display: flex;
+    gap: 2px;
+  }
+
+  .arch-box {
+    flex: 1;
+    background: var(--card2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+
+  .arch-box .ab-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 4px;
+  }
+
+  .arch-box .ab-name {
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 2px;
+  }
+
+  .arch-box .ab-desc {
+    font-size: 10px;
+    color: var(--dim);
+    line-height: 1.5;
+  }
+
+  .arch-box.purple { border-color: rgba(124,106,247,0.4); }
+  .arch-box.purple .ab-name { color: var(--accent2); }
+  .arch-box.green  { border-color: rgba(74,222,128,0.4); }
+  .arch-box.green  .ab-name { color: var(--green); }
+  .arch-box.blue   { border-color: rgba(56,189,248,0.4); }
+  .arch-box.blue   .ab-name { color: var(--blue); }
+  .arch-box.gold   { border-color: rgba(251,191,36,0.4); }
+  .arch-box.gold   .ab-name { color: var(--gold); }
+  .arch-box.red    { border-color: rgba(248,113,113,0.4); }
+  .arch-box.red    .ab-name { color: var(--red); }
+  .arch-box.orange { border-color: rgba(251,146,60,0.4); }
+  .arch-box.orange .ab-name { color: var(--orange); }
+
+  .arch-arrow {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--dim);
+    padding: 4px 0;
+  }
+
+  /* ── Data flow table ── */
+  .flow-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    font-family: var(--mono);
+    margin: 16px 0;
+  }
+
+  .flow-table th {
+    text-align: left;
+    padding: 10px 14px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--dim);
+    border-bottom: 1px solid var(--border2);
+    font-weight: 500;
+  }
+
+  .flow-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border2);
+    color: var(--dim2);
+    vertical-align: top;
+    line-height: 1.6;
+  }
+
+  .flow-table td:first-child { color: var(--text); font-weight: 500; }
+  .flow-table tr:last-child td { border-bottom: none; }
+  .flow-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* ── Callout ── */
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: rgba(124,106,247,0.06);
+    border-radius: 0 10px 10px 0;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 13px;
+    color: var(--dim2);
+    line-height: 1.7;
+  }
+
+  .callout.green  { border-color: var(--green);  background: rgba(74,222,128,0.05); }
+  .callout.gold   { border-color: var(--gold);   background: rgba(251,191,36,0.05); }
+  .callout.red    { border-color: var(--red);    background: rgba(248,113,113,0.05); }
+  .callout.blue   { border-color: var(--blue);   background: rgba(56,189,248,0.05); }
+
+  .callout strong { color: var(--text); }
+
+  /* ── File tree ── */
+  .file-tree {
+    background: #080810;
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 18px 20px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 2;
+  }
+
+  .ft-dir  { color: var(--blue); font-weight: 700; }
+  .ft-file { color: var(--dim2); }
+  .ft-file span { color: var(--dim); font-size: 11px; margin-left: 8px; }
+  .ft-indent { padding-left: 20px; }
+  .ft-indent2 { padding-left: 40px; }
+
+  /* ── Grid ── */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  /* ── Divider ── */
+  hr { border: none; border-top: 1px solid var(--border2); margin: 60px 0 0; }
+
+  /* ── TOC ── */
+  .toc {
+    background: var(--card);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-top: 40px;
+  }
+
+  .toc h3 {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 14px;
+  }
+
+  .toc a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    color: var(--dim2);
+    text-decoration: none;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border2);
+    transition: color 0.15s;
+  }
+
+  .toc a:last-child { border-bottom: none; }
+  .toc a:hover { color: var(--accent2); }
+  .toc a .toc-num { font-family: var(--mono); font-size: 10px; color: var(--dim); min-width: 24px; }
+
+  footer {
+    text-align: center;
+    padding: 40px 20px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--dim);
+    opacity: 0.5;
+  }
+
+  @media (max-width: 600px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .arch-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ HERO ══════════════════════════════════════════════════════════════════ -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">Technical Architecture · v2.0.0</div>
+    <h1>NAM! <span>//</span><br>Nature Around Me</h1>
+    <div class="hero-sub">// Zero-framework PWA · Vanilla JS · PHP · No build step</div>
+    <p class="hero-desc">
+      A production field tool for real-time wildlife observation aggregation,
+      built entirely without a framework, bundler, or build pipeline.
+      Ships as five files. Works offline in the field.
+    </p>
+    <div class="hero-badges">
+      <span class="badge badge-purple">Vanilla JS ES2020</span>
+      <span class="badge badge-green">PWA / Service Worker</span>
+      <span class="badge badge-blue">Leaflet 1.9.4</span>
+      <span class="badge badge-gold">PHP 8.3</span>
+      <span class="badge badge-red">iNaturalist API</span>
+      <span class="badge badge-orange">eBird API v2</span>
+      <span class="badge badge-blue">WMS / GeoServer</span>
+      <span class="badge badge-purple">JSONL Telemetry</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CONTENT ════════════════════════════════════════════════════════════════ -->
+<div class="container">
+
+  <div class="toc">
+    <h3>Contents</h3>
+    <a href="#files"><span class="toc-num">01</span> File Structure & Deployment</a>
+    <a href="#architecture"><span class="toc-num">02</span> Application Architecture</a>
+    <a href="#sw"><span class="toc-num">03</span> Service Worker & Caching Strategy</a>
+    <a href="#scan"><span class="toc-num">04</span> Scan Orchestration & Data Pipeline</a>
+    <a href="#notable"><span class="toc-num">05</span> The Notable Bug & Fix</a>
+    <a href="#state"><span class="toc-num">06</span> State Management</a>
+    <a href="#offline"><span class="toc-num">07</span> Offline Architecture</a>
+    <a href="#map"><span class="toc-num">08</span> Map Layer System</a>
+    <a href="#telemetry"><span class="toc-num">09</span> Telemetry Module</a>
+    <a href="#geocoding"><span class="toc-num">10</span> Geocoding Migration</a>
+    <a href="#decisions"><span class="toc-num">11</span> Design Decisions</a>
+  </div>
+
+  <!-- 01 FILE STRUCTURE -->
+  <div class="section" id="files">
+    <div class="section-eyebrow">01 — File Structure</div>
+    <h2>Five files. No build step.</h2>
+    <p>The entire application ships as a flat directory. No transpilation, no bundling, no node_modules. Deployed via FTP.</p>
+
+    <div class="file-tree">
+      <div class="ft-dir">htdocs/</div>
+      <div class="ft-indent">
+        <div class="ft-dir">nam/</div>
+        <div class="ft-indent">
+          <div class="ft-file">index.html <span>— shell, DOM structure, script tags</span></div>
+          <div class="ft-file">nam.js <span>— ~1400 lines, all application logic</span></div>
+          <div class="ft-file">nam.css <span>— ~650 lines, CSS custom properties throughout</span></div>
+          <div class="ft-file">nam-sw.js <span>— service worker, two cache strategies</span></div>
+          <div class="ft-file">ebird_proxy.php <span>— CORS proxy for eBird API key</span></div>
+          <div class="ft-file">nam-guide.html <span>— end-user documentation</span></div>
+        </div>
+        <div class="ft-dir">telemetry/ <span style="color:var(--dim);font-size:11px;">(sibling directory)</span></div>
+        <div class="ft-indent">
+          <div class="ft-file">telemetry.js <span>— universal client telemetry module</span></div>
+          <div class="ft-file">telemetry.php <span>— JSONL receiver + append</span></div>
+          <div class="ft-file">telemetry-csv.php <span>— CSV export for Sheets</span></div>
+          <div class="ft-file">logs/ <span>— telemetry-YYYY-MM.jsonl (auto-created)</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout green">
+      <strong>No framework rationale:</strong> The app targets a single primary user in the field on mobile. Framework overhead (React hydration, bundle splitting, etc.) adds latency and complexity that doesn't pay off at this scale. Vanilla JS with <code>async/await</code> and CSS custom properties gets the job done in ~150KB total.
+    </div>
+  </div>
+
+  <!-- 02 ARCHITECTURE -->
+  <div class="section" id="architecture">
+    <div class="section-eyebrow">02 — Architecture</div>
+    <h2>Single-page, event-driven, no router</h2>
+    <p>NAM! is a single HTML page. All UI state transitions are DOM mutations driven by vanilla JS functions. There is no virtual DOM, no component tree, no reactivity system.</p>
+
+    <div class="arch">
+      <div class="arch-row">
+        <div class="arch-box purple">
+          <div class="ab-label">Trigger</div>
+          <div class="ab-name">User / GPS / Location</div>
+          <div class="ab-desc">Tap scan, set location, drag marker, right-click map</div>
+        </div>
+        <div class="arch-box purple">
+          <div class="ab-label">Orchestrator</div>
+          <div class="ab-name">runScan(pos)</div>
+          <div class="ab-desc">Coordinates parallel fetches, merges results, writes cache</div>
+        </div>
+      </div>
+      <div class="arch-arrow">↓ Promise.all([ fetchINat, fetchEBird ]) ↓</div>
+      <div class="arch-row">
+        <div class="arch-box green">
+          <div class="ab-label">API 1</div>
+          <div class="ab-name">iNaturalist v1</div>
+          <div class="ab-desc">All taxa · geo radius · 150 obs · direct browser fetch</div>
+        </div>
+        <div class="arch-box blue">
+          <div class="ab-label">API 2 (birds only)</div>
+          <div class="ab-name">eBird v2 → PHP Proxy</div>
+          <div class="ab-desc">Recent + notable · CORS proxied · API key hidden server-side</div>
+        </div>
+        <div class="arch-box gold">
+          <div class="ab-label">Life List</div>
+          <div class="ab-name">Google Sheet → GAS</div>
+          <div class="ab-desc">Bird life list via Apps Script · 1-week localStorage cache</div>
+        </div>
+      </div>
+      <div class="arch-arrow">↓ merge → normalize → sort by date → rawData[] ↓</div>
+      <div class="arch-row">
+        <div class="arch-box red">
+          <div class="ab-label">Render</div>
+          <div class="ab-name">applyView()</div>
+          <div class="ab-desc">Filter → markers → stats → cards — single render function for all state</div>
+        </div>
+        <div class="arch-box orange">
+          <div class="ab-label">Persistence</div>
+          <div class="ab-name">localStorage + SW Cache</div>
+          <div class="ab-desc">Observations + tiles cached for offline use in the field</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 03 SERVICE WORKER -->
+  <div class="section" id="sw">
+    <div class="section-eyebrow">03 — Service Worker</div>
+    <h2>Two cache strategies, one gray tile fallback</h2>
+    <p>The service worker (<code>nam-sw.js</code>) implements differentiated caching based on resource type — a deliberate choice driven by the offline field use case.</p>
+
+    <div class="grid-2">
+      <div class="card card-purple">
+        <h3>📄 HTML — Stale-While-Revalidate</h3>
+        <p>Serve the cached shell instantly. Revalidate in the background with <code>event.waitUntil(networkFetch)</code>. Next load gets the fresh version. Zero-latency perceived load.</p>
+      </div>
+      <div class="card card-blue">
+        <h3>🗺 Tiles — Network-First, Cache Fallback</h3>
+        <p>Always try network first to prevent stale tiles when online. On failure, serve from <code>nam-tiles-v3</code> cache. LRU eviction at 500 tiles (~25MB). Opaque responses rejected explicitly.</p>
+      </div>
+    </div>
+
+    <pre><span class="cm">// Firefox quirk: opaque responses (status 0) must be rejected</span>
+<span class="cm">// or cache.put() silently stores unusable blobs</span>
+<span class="kw">const</span> <span class="cn">res</span> = <span class="kw">await</span> fetch(request, {
+  mode: <span class="str">'cors'</span>,
+  credentials: <span class="str">'omit'</span>  <span class="cm">// required for cross-origin tiles in SW context</span>
+});
+<span class="kw">if</span> (res.ok && res.type !== <span class="str">'opaque'</span>) {
+  cache.put(request, res.clone());
+}</pre>
+
+    <div class="callout blue">
+      <strong>Gray tile fallback:</strong> When a tile is requested offline and isn't cached, rather than letting Leaflet show a broken image, the SW synthesizes a 1×1 dark gray PNG from a base64 literal and returns it as a valid <code>200 image/png</code> response. The map stays visually coherent even in uncached areas.
+    </div>
+
+    <div class="callout">
+      <strong>Cache versioning:</strong> <code>APP_CACHE = 'nam-app-v2.0.0'</code> and <code>TILE_CACHE = 'nam-tiles-v3'</code> are intentionally on separate version keys. Bumping the app version doesn't evict the tile cache — tiles are expensive to re-download in the field and are still valid regardless of app version.
+    </div>
+
+    <p style="margin-top:16px;">API calls (iNat, eBird, WMS, parcel) explicitly pass through with no caching — dynamic data should never be served stale. The pass-through is the default <code>fetch</code> handler case — no <code>respondWith</code> means the browser handles it normally.</p>
+  </div>
+
+  <!-- 04 SCAN PIPELINE -->
+  <div class="section" id="scan">
+    <div class="section-eyebrow">04 — Scan Pipeline</div>
+    <h2>Parallel fetches, sequential eBird, unified normalize</h2>
+    <p>The scan orchestrator runs iNaturalist and eBird concurrently via <code>Promise.all()</code>, but eBird's two sub-fetches (recent + notable) run sequentially to avoid race conditions on the shared PHP proxy.</p>
+
+    <pre><span class="cm">// runScan() — core orchestration</span>
+<span class="kw">const</span> <span class="cn">fetchPromises</span> = [
+  wantedFresh ? Promise.resolve() : <span class="fn">forceSheetSync</span>(),  <span class="cm">// life list (cached 1 week)</span>
+  <span class="fn">fetchINat</span>(lat, lng, dist, dateStr),                   <span class="cm">// iNat (parallel)</span>
+];
+<span class="kw">if</span> (useEbird) fetchPromises.push(<span class="fn">fetchEBird</span>(lat, lng, dist)); <span class="cm">// eBird (parallel)</span>
+
+<span class="kw">const</span> <span class="cn">results</span> = <span class="kw">await</span> Promise.all(fetchPromises);</pre>
+
+    <p>After resolution, all observations are re-derived to attach life list cross-references. This handles the edge case where <code>forceSheetSync()</code> ran as part of this scan and populated <code>fullLifeList</code> for the first time mid-flight:</p>
+
+    <pre><span class="cm">// rederive() — cross-reference life list post-fetch</span>
+<span class="kw">const</span> <span class="fn">rederive</span> = o => {
+  <span class="kw">const</span> <span class="cn">latin</span> = (o.sci_name || <span class="str">''</span>).toLowerCase();
+  <span class="kw">const</span> <span class="cn">sheetRow</span> = fullLifeList.find(w =>
+    (w.Latin2 || w.latin2 || <span class="str">''</span>).toLowerCase() === latin
+  );
+  <span class="kw">return</span> {
+    ...o,
+    is_wanted: fullWantedList.some(w => ...latin match...),
+    sheet_link: sheetRow && <span class="fn">hasPhoto</span>(sheetRow) ? sheetRow.Link : <span class="kw">null</span>
+  };
+};</pre>
+
+    <table class="flow-table">
+      <tr><th>Source</th><th>Endpoint</th><th>Auth</th><th>Result shape</th></tr>
+      <tr>
+        <td>iNaturalist</td>
+        <td><code>api.inaturalist.org/v1/observations</code></td>
+        <td>None (public)</td>
+        <td>Direct browser fetch, 150 results max, geo+taxon filtered</td>
+      </tr>
+      <tr>
+        <td>eBird recent</td>
+        <td><code>ebird_proxy.php?mode=recent</code></td>
+        <td>API key server-side</td>
+        <td>PHP proxy adds <code>X-eBirdApiToken</code> header, returns raw eBird JSON</td>
+      </tr>
+      <tr>
+        <td>eBird notable</td>
+        <td><code>ebird_proxy.php?mode=notable</code></td>
+        <td>API key server-side</td>
+        <td>Sequential after recent; failures are best-effort / silently ignored</td>
+      </tr>
+      <tr>
+        <td>Life list</td>
+        <td>Google Apps Script web app URL</td>
+        <td>None (published)</td>
+        <td>JSON array of bird records; cached to localStorage for 1 week</td>
+      </tr>
+    </table>
+
+    <div class="callout gold">
+      <strong>eBird proxy pattern:</strong> The eBird API key cannot be exposed client-side. <code>ebird_proxy.php</code> is a thin 15-line PHP file that appends the API key header and forwards the response verbatim. No transformation, no state. The proxy lives server-side; the key never reaches the browser.
+    </div>
+  </div>
+
+  <!-- 05 NOTABLE BUG -->
+  <div class="section" id="notable">
+    <div class="section-eyebrow">05 — Bug & Fix</div>
+    <h2>The subId notable contamination bug</h2>
+    <p>A subtle data modeling bug caused every bird on an eBird checklist to be marked notable if any single bird on that checklist was notable — and simultaneously caused clicking any card to filter to the entire checklist rather than that one record.</p>
+
+    <div class="card card-red" style="border-color:rgba(248,113,113,0.3);">
+      <h3>🐛 Root cause</h3>
+      <p>eBird's <code>subId</code> is a <strong>checklist identifier</strong> — shared by every species observation recorded on that outing. The notable detection set was keyed only on <code>subId</code>, so any checklist containing one notable species poisoned all others on the same checklist.</p>
+      <p style="margin-top:8px;">The same <code>subId</code> was also used as the observation's unique <code>id</code> field, meaning filtering by <code>id</code> matched the whole checklist, not one record.</p>
+    </div>
+
+    <pre><span class="cm">// BEFORE — subId alone, not unique per species</span>
+notableIds = <span class="kw">new</span> Set(notableData.map(n => String(n.subId)));
+is_notable: notableIds.has(String(obs.subId))  <span class="cm">// contaminated!</span>
+
+<span class="cm">// AFTER — composite key: checklist + species</span>
+notableIds = <span class="kw">new</span> Set(
+  notableData.map(n => n.subId + <span class="str">'|'</span> + (n.speciesCode || n.sciName || <span class="str">''</span>))
+);
+is_notable: notableIds.has(
+  obs.subId + <span class="str">'|'</span> + (obs.speciesCode || obs.sciName || <span class="str">''</span>)
+)</pre>
+
+    <div class="callout green">
+      <strong>Cascading fix:</strong> The composite key also fixed the filter contamination bug as a side effect — since each observation's <code>id</code> is now <code>'ebird-' + subId + '|' + speciesCode</code>, clicking a card correctly filters to exactly one record rather than the whole checklist. Two bugs, one fix.
+    </div>
+  </div>
+
+  <!-- 06 STATE -->
+  <div class="section" id="state">
+    <div class="section-eyebrow">06 — State Management</div>
+    <h2>Module-scoped globals, single render function</h2>
+    <p>With no framework, state is a set of module-scoped variables. The pattern that keeps this maintainable: <strong>one function, <code>applyView()</code>, is the only path to any UI update after a scan.</strong> Nothing renders directly — everything goes through <code>applyView()</code>.</p>
+
+    <pre><span class="cm">// Core state variables</span>
+<span class="kw">let</span> rawData = [];           <span class="cm">// all observations from current scan</span>
+<span class="kw">let</span> fullLifeList = [];      <span class="cm">// complete life list from Google Sheet</span>
+<span class="kw">let</span> fullWantedList = [];    <span class="cm">// unseen subset — derived on sync</span>
+<span class="kw">let</span> activeFilter = null;    <span class="cm">// { type: 'species'|'location'|'id', value }</span>
+<span class="kw">let</span> activeTaxon = 3;        <span class="cm">// iNat taxon_id (3=birds, null=all life)</span>
+<span class="kw">let</span> globalToggles = { ebird: false, wanted: false };
+<span class="kw">let</span> isInitialLoad = true;   <span class="cm">// flyToBounds vs fitBounds on map render</span></pre>
+
+    <div class="callout">
+      <strong><code>applyView()</code> — the single render path:</strong> Computes <code>getCurrentFilteredList()</code> from <code>rawData</code> + <code>activeFilter</code> + <code>globalToggles</code>, then updates markers, status bar, species heatmap, hotspot list, and detail cards in one pass. Any user action that changes visible data calls <code>applyView()</code> — there's no other render path.
+    </div>
+
+    <p>Scroll position is preserved across filter transitions: <code>preFilterScrollPos = window.scrollY</code> is captured before any filter is applied, and restored exactly on clear. The gallery also captures its own scroll position for the same reason.</p>
+  </div>
+
+  <!-- 07 OFFLINE -->
+  <div class="section" id="offline">
+    <div class="section-eyebrow">07 — Offline Architecture</div>
+    <h2>Designed for the field, not the browser tab</h2>
+    <p>The offline story is first-class, not an afterthought. The primary use case: scan at home before a hike, lose cell signal on the trail, use GPS to track position against pre-loaded sightings.</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>🗄 Observation Cache</h3>
+        <p>Every successful scan writes the full <code>rawData[]</code> array to <code>localStorage</code> as <code>nam_obs_cache</code>, including the scan location, active taxon, timestamp, and the highest map zoom level reached. On next load offline, this is restored in full.</p>
+      </div>
+      <div class="card">
+        <h3>📡 GPS Without Network</h3>
+        <p><code>navigator.geolocation</code> is satellite-based — completely independent of cell/data. Offline Reset GPS moves the location marker and pans the map at the current zoom level without triggering a rescan or disturbing cached data.</p>
+      </div>
+    </div>
+
+    <pre><span class="cm">// Offline GPS reset — no rescan, no zoom change</span>
+<span class="kw">if</span> (!navigator.onLine) {
+  <span class="kw">if</span> (userMarker) {
+    userMarker.setLatLng([lat, lng]);  <span class="cm">// move dot in place</span>
+  }
+  map.panTo([lat, lng], { animate: <span class="kw">true</span>, duration: <span class="num">1.5</span> });
+  <span class="cm">// zoom preserved — cached tiles still valid at current level</span>
+  <span class="kw">return</span>;
+}</pre>
+
+    <div class="callout">
+      <strong>Zoom cap on offline map:</strong> The cache stores <code>maxCachedZoom</code> — the highest zoom level the user browsed while online. When offline, <code>applyView()</code> caps <code>flyToBounds</code> at <code>Math.min(maxCachedZoom, 16)</code> to prevent zooming into areas where tiles haven't been fetched. The SW would serve gray placeholders otherwise — this prevents that visually jarring situation.
+    </div>
+
+    <p>The online/offline transition is handled symmetrically: <code>window.addEventListener('online')</code> restores all network-dependent UI (scan button, geocoding, geology overlay, parcel layer). <code>offline</code> disables them and loads the observation cache if available.</p>
+  </div>
+
+  <!-- 08 MAP -->
+  <div class="section" id="map">
+    <div class="section-eyebrow">08 — Map Layer System</div>
+    <h2>Leaflet + WMS + GeoServer overlays</h2>
+    <p>The map is built on Leaflet 1.9.4 with a layered system of base tiles and optional overlays. All overlay and tile load times are instrumented via <code>performance.now()</code> and reported to telemetry.</p>
+
+    <table class="flow-table">
+      <tr><th>Layer</th><th>Source</th><th>Type</th><th>Notes</th></tr>
+      <tr><td>Streets</td><td>OpenStreetMap</td><td>XYZ tile</td><td>Default basemap, offline-cacheable</td></tr>
+      <tr><td>USGS Topo</td><td>National Map</td><td>XYZ tile</td><td>Useful for terrain / trail context</td></tr>
+      <tr><td>Hybrid</td><td>Mapbox Satellite Streets</td><td>XYZ tile (512px)</td><td>zoomOffset: -1 for 512px tile size</td></tr>
+      <tr><td>Terrain</td><td>OpenTopoMap</td><td>XYZ tile</td><td>Contour overlay</td></tr>
+      <tr><td>Dark</td><td>Carto Dark Matter</td><td>XYZ tile</td><td>Low-light / night use</td></tr>
+      <tr><td>Geology</td><td>Macrostrat / USGS SGMC</td><td>XYZ / WMS</td><td>Click-to-identify via Macrostrat REST API</td></tr>
+      <tr><td>Parcels</td><td>StratMap Texas GeoServer</td><td>WMS (GetMap + GetFeatureInfo)</td><td>Zoom ≥ 15 gate; click returns XML owner data</td></tr>
+    </table>
+
+    <div class="callout blue">
+      <strong>WMS GetFeatureInfo pattern:</strong> When the parcel layer is active, map clicks fire a <code>GetFeatureInfo</code> request to the GeoServer WMS endpoint with the current BBOX, pixel dimensions, and click coordinates translated to pixel space via <code>map.latLngToContainerPoint()</code>. The server returns XML which is parsed with <code>DOMParser</code> to extract owner name, address, county, and acreage. An <code>AbortController</code> with a 60-second countdown cancels stale requests when the user clicks rapidly.
+    </div>
+
+    <p>The parcel layer has three distinct loading states communicated via button class mutations: <code>parcel-tile-loading</code> (WMS tiles loading), <code>parcel-fetching</code> (GetFeatureInfo in flight), <code>parcel-active</code> (tiles loaded, ready), and <code>parcel-error</code> (≥3 tile errors). Each transition has its own visual treatment in CSS.</p>
+  </div>
+
+  <!-- 09 TELEMETRY -->
+  <div class="section" id="telemetry">
+    <div class="section-eyebrow">09 — Telemetry Module</div>
+    <h2>Zero-dependency, batched, beacon-safe</h2>
+    <p><code>telemetry.js</code> is a self-contained IIFE designed as a reusable module independent of NAM! — it can be dropped into any web app. It was built specifically to not interfere with NAM!'s existing internal <code>dlog()</code> debug logger.</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>⚡ Automatic Capture</h3>
+        <p>On <code>init()</code>: attaches <code>window.onerror</code>, <code>unhandledrejection</code>, <code>online</code>/<code>offline</code>, <code>visibilitychange</code>, <code>pagehide</code>, and <code>beforeunload</code> — zero instrumentation required for baseline observability.</p>
+      </div>
+      <div class="card">
+        <h3>📦 Batched Flush</h3>
+        <p>Events queue in memory and flush every 3 seconds via <code>setTimeout</code>. Errors bypass the batch and flush immediately. On page unload, <code>navigator.sendBeacon()</code> delivers remaining events — <code>fetch()</code> is unreliable during unload.</p>
+      </div>
+    </div>
+
+    <pre><span class="cm">// sendBeacon on unload — fetch() won't complete after page close</span>
+<span class="kw">function</span> <span class="fn">_flushBeacon</span>() {
+  <span class="kw">const</span> <span class="cn">payload</span> = JSON.stringify({ events: _queue.splice(<span class="num">0</span>) });
+  navigator.sendBeacon(
+    _cfg.endpoint,
+    <span class="kw">new</span> Blob([payload], { type: <span class="str">'application/json'</span> })
+  );
+}</pre>
+
+    <p>The PHP receiver appends events to a JSONL file (<code>telemetry-YYYY-MM.jsonl</code>) using <code>flock()</code> for safe concurrent writes. Monthly rotation is filename-based — no cron required. A companion <code>telemetry-csv.php</code> reads the JSONL and streams a CSV download for Google Sheets import.</p>
+
+    <table class="flow-table">
+      <tr><th>Event</th><th>Instrumented data</th></tr>
+      <tr><td><code>session/start</code></td><td>OS, mobile, viewport, timezone, lang, online state</td></tr>
+      <tr><td><code>gps_acquired</code></td><td>lat, lng, accuracy_m, offline flag</td></tr>
+      <tr><td><code>sheet_sync</code></td><td>duration_ms, species_count, lat, lng</td></tr>
+      <tr><td><code>inat_fetch</code></td><td>duration_ms, obs_count, taxon, radius_mi, lat, lng</td></tr>
+      <tr><td><code>ebird_fetch</code></td><td>duration_ms, recent_ms, notable_ms, obs_count, notable_count, lat, lng</td></tr>
+      <tr><td><code>scan_complete</code></td><td>total duration_ms, obs_count, wanted_count, sheet_cached, scan_lat, scan_lng</td></tr>
+      <tr><td><code>tile_load</code></td><td>duration_ms, basemap name, zoom level, lat, lng</td></tr>
+      <tr><td><code>overlay_load</code></td><td>duration_ms, overlay name, zoom level, lat, lng</td></tr>
+      <tr><td><code>session/end</code></td><td>total duration_s</td></tr>
+    </table>
+  </div>
+
+  <!-- 10 GEOCODING -->
+  <div class="section" id="geocoding">
+    <div class="section-eyebrow">10 — Geocoding Migration</div>
+    <h2>Mapbox → Nominatim with retry fallback</h2>
+    <p>The original Mapbox geocoding integration began returning 403s — the token's allowed-domain allowlist didn't include the production domain. Rather than rotating the token, geocoding was migrated to OpenStreetMap Nominatim: no API key, no rate limits for reasonable usage, same result shape for the app's purposes.</p>
+
+    <pre><span class="cm">// Two-pass geocoding: exact query, then "query + USA" fallback</span>
+<span class="kw">async function</span> <span class="fn">nominatimSearch</span>(query) {
+  <span class="kw">const</span> <span class="cn">res</span> = <span class="kw">await</span> fetch(
+    <span class="str">`https://nominatim.openstreetmap.org/search?q=${</span>
+      encodeURIComponent(query)
+    <span class="str">}&format=json&limit=1`</span>,
+    { headers: { <span class="str">'Accept-Language'</span>: <span class="str">'en'</span> } }
+  );
+  <span class="kw">return</span> res.json();
+}
+
+<span class="kw">let</span> data = <span class="kw">await</span> <span class="fn">nominatimSearch</span>(input);
+<span class="kw">if</span> (data.length === <span class="num">0</span>) {
+  data = <span class="kw">await</span> <span class="fn">nominatimSearch</span>(input + <span class="str">', USA'</span>);  <span class="cm">// disambiguation retry</span>
+}</pre>
+
+    <div class="callout">
+      <strong>UX on failure:</strong> If both passes return empty, the modal re-opens with the user's original query preserved in the input and an inline error message injected below it. The input is focused and selected for immediate re-edit. The "Fly There" button shows a searching state during the async call and is disabled to prevent double-submission.
+    </div>
+  </div>
+
+  <!-- 11 DECISIONS -->
+  <div class="section" id="decisions">
+    <div class="section-eyebrow">11 — Design Decisions</div>
+    <h2>Things worth explaining</h2>
+
+    <div class="card card-purple">
+      <h3>Why Google Sheets as a database</h3>
+      <p>The life list is maintained by a non-technical user. Google Sheets gives them a familiar interface for marking birds seen, adding photos via Google Photos links, and managing codes. A Google Apps Script web app publishes the sheet as JSON — no backend, no database admin, no schema migrations. The 1-week localStorage TTL means updates propagate within a week without any user action.</p>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <h3>Why iNaturalist direct + eBird proxied</h3>
+      <p>iNaturalist has a public CORS-enabled API that works fine from the browser. eBird requires an API key in the request header — headers can't be set for cross-origin requests from the browser without CORS cooperation from the server. The PHP proxy is the minimal solution: 15 lines, no state, appends the header, passes through verbatim.</p>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <h3>Why <code>performance.now()</code> over <code>Date.now()</code> for timing</h3>
+      <p><code>performance.now()</code> is monotonic — it's not affected by system clock adjustments and has sub-millisecond precision. For measuring fetch durations that might be 50–5000ms, this matters. <code>Date.now()</code> can jump backward on clock sync. All telemetry timing uses <code>performance.now()</code> deltas, converted to integers via <code>Math.round()</code> before transmission.</p>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <h3>Why JSONL for telemetry logs</h3>
+      <p>A proper JSON array requires reading the entire file, parsing it, appending, and rewriting on every event batch — even with <code>flock()</code>, this is expensive and fragile under concurrent requests. JSONL (one JSON object per line) allows pure append writes. The CSV exporter does a single linear read of the file to build the output — this is fast even for large logs and requires no intermediate representation.</p>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <h3>CSS custom properties for dual theme</h3>
+      <p>The entire color system lives in <code>:root</code> and <code>[data-theme="light"]</code> custom property overrides. Theme switching is a single <code>document.documentElement.setAttribute('data-theme', t)</code> call — no class toggling, no JS color lookups, no style injection. The browser handles repaints. Preference is persisted to localStorage and applied on <code>initApp()</code> before first render to avoid flash.</p>
+    </div>
+
+  </div>
+
+  <hr>
+
+</div>
+
+<footer>
+  NAM! Nature Around Me · v2.0.0 · Technical Architecture<br>
+  Built with vanilla JS, PHP 8.3, Leaflet 1.9.4 · No framework · No build step · Ships as five files
+</footer>
+
+</body>
+</html>

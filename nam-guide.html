@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAM! — Field Guide</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #06120a;
+            --card: #0e1f14;
+            --card2: #14261a;
+            --accent: #4ade80;
+            --accent2: #22c55e;
+            --gold: #fbbf24;
+            --blue: #38bdf8;
+            --red: #ef4444;
+            --purple: #a855f7;
+            --text: #f0fdf4;
+            --dim: #86a892;
+            --border: rgba(74, 222, 128, 0.15);
+            --border2: rgba(74, 222, 128, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 300;
+            line-height: 1.7;
+            padding-bottom: 80px;
+        }
+
+        /* ── Hero ── */
+        .hero {
+            position: relative;
+            padding: 70px 24px 60px;
+            text-align: center;
+            overflow: hidden;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 50% 0%, rgba(74, 222, 128, 0.12) 0%, transparent 70%),
+                radial-gradient(ellipse 40% 40% at 20% 80%, rgba(56, 189, 248, 0.06) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .hero-eyebrow {
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 18px;
+            opacity: 0.8;
+        }
+
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(48px, 10vw, 88px);
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: -2px;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .hero-sub {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: clamp(16px, 3vw, 22px);
+            color: var(--dim);
+            margin-bottom: 28px;
+        }
+
+        .hero-desc {
+            max-width: 560px;
+            margin: 0 auto;
+            font-size: 16px;
+            color: var(--dim);
+            line-height: 1.8;
+        }
+
+        .hero-version {
+            display: inline-block;
+            margin-top: 24px;
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            color: var(--accent);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 4px 14px;
+            letter-spacing: 2px;
+        }
+
+        /* ── Layout ── */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* ── Section headers ── */
+        .section {
+            margin-top: 56px;
+        }
+
+        .section-label {
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--accent);
+            opacity: 0.6;
+            margin-bottom: 6px;
+        }
+
+        .section h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(26px, 5vw, 38px);
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.5px;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        .section>p {
+            color: var(--dim);
+            font-size: 15px;
+            margin-bottom: 24px;
+            max-width: 640px;
+        }
+
+        /* ── Cards ── */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px 28px;
+            margin-bottom: 16px;
+        }
+
+        .card-accent {
+            border-color: rgba(74, 222, 128, 0.35);
+            background: linear-gradient(135deg, var(--card2) 0%, var(--card) 100%);
+        }
+
+        .card h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card p {
+            color: var(--dim);
+            font-size: 14px;
+            line-height: 1.75;
+        }
+
+        .card p+p {
+            margin-top: 10px;
+        }
+
+        /* ── Steps ── */
+        .steps {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            position: relative;
+        }
+
+        .steps::before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 24px;
+            bottom: 24px;
+            width: 1px;
+            background: var(--border);
+        }
+
+        .step {
+            display: flex;
+            gap: 20px;
+            padding: 20px 0;
+            position: relative;
+        }
+
+        .step-num {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--card2);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            font-family: 'DM Mono', monospace;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-body {
+            flex: 1;
+            padding-top: 8px;
+        }
+
+        .step-body strong {
+            display: block;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .step-body p {
+            font-size: 14px;
+            color: var(--dim);
+            line-height: 1.7;
+        }
+
+        /* ── Marker legend ── */
+        .marker-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .marker-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            background: var(--card);
+            border: 1px solid var(--border2);
+            border-radius: 14px;
+            padding: 16px;
+        }
+
+        .dot {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2.5px solid white;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .dot-green {
+            background: #4ade80;
+        }
+
+        .dot-blue {
+            background: #38bdf8;
+        }
+
+        .dot-red {
+            background: #ef4444;
+            border-width: 2.5px;
+        }
+
+        .dot-white {
+            background: white;
+            border-color: #4ade80;
+            border-width: 3px;
+        }
+
+        .dot-faded {
+            background: #4ade80;
+            opacity: 0.55;
+            border-style: dashed;
+        }
+
+        .dot-notable-obs {
+            background: #ef4444;
+            opacity: 0.55;
+            border-style: dashed;
+        }
+
+        .marker-item div strong {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 3px;
+        }
+
+        .marker-item div p {
+            font-size: 12px;
+            color: var(--dim);
+            line-height: 1.5;
+        }
+
+        /* ── Button pills ── */
+        .btn-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .btn-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'DM Mono', monospace;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            border: 1px solid;
+        }
+
+        .pill-green {
+            color: var(--accent);
+            border-color: rgba(74, 222, 128, 0.4);
+            background: rgba(74, 222, 128, 0.06);
+        }
+
+        .pill-blue {
+            color: var(--blue);
+            border-color: rgba(56, 189, 248, 0.4);
+            background: rgba(56, 189, 248, 0.06);
+        }
+
+        .pill-gold {
+            color: var(--gold);
+            border-color: rgba(251, 191, 36, 0.4);
+            background: rgba(251, 191, 36, 0.06);
+        }
+
+        .pill-purple {
+            color: var(--purple);
+            border-color: rgba(168, 85, 247, 0.4);
+            background: rgba(168, 85, 247, 0.06);
+        }
+
+        .pill-red {
+            color: var(--red);
+            border-color: rgba(239, 68, 68, 0.4);
+            background: rgba(239, 68, 68, 0.06);
+        }
+
+        /* ── Tip box ── */
+        .tip {
+            background: rgba(74, 222, 128, 0.06);
+            border: 1px solid rgba(74, 222, 128, 0.25);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 14px 14px 0;
+            padding: 14px 18px;
+            margin-top: 16px;
+            font-size: 13px;
+            color: var(--dim);
+            line-height: 1.7;
+        }
+
+        .tip strong {
+            color: var(--accent);
+        }
+
+        /* ── Taxa chips ── */
+        .taxa-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .taxa-chip {
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: 700;
+            border: 1px solid var(--border);
+            color: var(--dim);
+            background: var(--card);
+        }
+
+        .taxa-chip.active {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        /* ── Map overlay button row ── */
+        .overlay-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .overlay-btn {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            background: var(--card2);
+            border: 2px solid var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .overlay-btn-label {
+            font-size: 11px;
+            color: var(--dim);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .overlay-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--card);
+            border: 1px solid var(--border2);
+            border-radius: 14px;
+            padding: 12px 16px;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .overlay-item div p {
+            font-size: 12px;
+            color: var(--dim);
+            line-height: 1.5;
+        }
+
+        .overlay-item div strong {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 2px;
+        }
+
+        /* ── Nav dock illustration ── */
+        .dock-illustration {
+            background: var(--card2);
+            border: 1px solid var(--accent);
+            border-radius: 40px;
+            padding: 12px 20px;
+            display: inline-flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+
+        .dock-btn-ill {
+            background: transparent;
+            border: none;
+            color: var(--accent);
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 5px 10px;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── Divider ── */
+        .divider {
+            border: none;
+            border-top: 1px solid var(--border2);
+            margin: 50px 0 0;
+        }
+
+        /* ── Footer ── */
+        footer {
+            text-align: center;
+            padding: 40px 20px 20px;
+            font-size: 12px;
+            color: var(--dim);
+            opacity: 0.5;
+            font-family: 'DM Mono', monospace;
+        }
+
+        /* ── Inline code ── */
+        code {
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            background: rgba(74, 222, 128, 0.1);
+            color: var(--accent);
+            padding: 2px 7px;
+            border-radius: 5px;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 600px) {
+            .card {
+                padding: 18px 20px;
+            }
+
+            .marker-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .overlay-item {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ══ HERO ══════════════════════════════════════════════════════════════════ -->
+    <div class="hero">
+        <div class="hero-eyebrow">Your personal field companion</div>
+        <h1>NAM!</h1>
+        <div class="hero-sub">Nature Around Me</div>
+        <p class="hero-desc">
+            A living map of every bird, plant, insect, and wild thing spotted near you —
+            drawn from real observations by real naturalists, updated every time you tap Scan.
+        </p>
+        <div class="hero-version">v2.0.0 · Field Guide</div>
+    </div>
+
+    <!-- ══ CONTENT ════════════════════════════════════════════════════════════════ -->
+    <div class="container">
+
+        <!-- GETTING STARTED -->
+        <div class="section">
+            <div class="section-label">Getting started</div>
+            <h2>Your first scan</h2>
+            <p>NAM! finds nature observations near wherever you are. Here's all it takes:</p>
+
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-body">
+                        <strong>Open the app and tap the big green button</strong>
+                        <p>The <strong>NAM! SCAN NATURE</strong> button at the top does everything. Tap it once and the
+                            app will ask for your location, then go fetch recent sightings from two wildlife databases
+                            simultaneously.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-body">
+                        <strong>Allow location access when prompted</strong>
+                        <p>Your phone will ask if NAM! can see your location. Tap Allow — this is how the app knows
+                            where to look. Your location is never stored anywhere or shared with anyone.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-body">
+                        <strong>Watch the scan progress</strong>
+                        <p>A small progress panel shows the three data sources loading in real time — your bird target
+                            list, iNaturalist observations, and eBird sightings. It usually takes just a few seconds.
+                        </p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">4</div>
+                    <div class="step-body">
+                        <strong>Explore what's around you</strong>
+                        <p>A map appears with colored dots for every recent sighting, plus scrollable lists and photo
+                            cards below. Everything is tappable and interactive.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- THE MAP -->
+        <div class="section">
+            <div class="section-label">The map</div>
+            <h2>Reading the dots</h2>
+            <p>Every dot on the map is a real recent observation. The colors tell you what kind it is at a glance.</p>
+
+            <div class="marker-grid">
+                <div class="marker-item">
+                    <div class="dot dot-white"></div>
+                    <div>
+                        <strong>You</strong>
+                        <p>Your current location. You can drag this dot to change the scan center.</p>
+                    </div>
+                </div>
+                <div class="marker-item">
+                    <div class="dot dot-green"></div>
+                    <div>
+                        <strong>iNaturalist</strong>
+                        <p>Observation submitted to iNaturalist — could be any wildlife: birds, plants, insects, fungi,
+                            mammals, reptiles.</p>
+                    </div>
+                </div>
+                <div class="marker-item">
+                    <div class="dot dot-blue"></div>
+                    <div>
+                        <strong>eBird</strong>
+                        <p>Bird sighting reported to Cornell's eBird — birds only, but with deeper location detail.</p>
+                    </div>
+                </div>
+                <div class="marker-item">
+                    <div class="dot dot-red"></div>
+                    <div>
+                        <strong>Notable sighting</strong>
+                        <p>A rare or unusual bird for the area. Worth checking out — these always rise to the top of the
+                            map.</p>
+                    </div>
+                </div>
+                <div class="marker-item">
+                    <div class="dot dot-faded"></div>
+                    <div>
+                        <strong>Obscured location</strong>
+                        <p>The exact spot is hidden to protect a sensitive species. The dot is approximate.</p>
+                    </div>
+                </div>
+                <div class="marker-item">
+                    <div class="dot dot-notable-obs"></div>
+                    <div>
+                        <strong>Notable &amp; obscured</strong>
+                        <p>A rare bird whose exact location is also hidden — red for notable, dashed border for
+                            obscured.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tip">
+                <strong>Tip:</strong> Tap any dot on the map to zoom in and see exactly what was observed there. The
+                detail card scrolls into view automatically. Tap the red <strong>X</strong> button in the corner to zoom
+                back out to all sightings.
+            </div>
+        </div>
+
+        <!-- MAP CONTROLS -->
+        <div class="section">
+            <div class="section-label">Map controls</div>
+            <h2>Buttons on the map</h2>
+            <p>Six small buttons float on the left side of the map. Here's what each one does:</p>
+
+            <div class="overlay-row">
+                <div class="overlay-item">
+                    <div class="overlay-btn">🐦</div>
+                    <div>
+                        <strong>eBird Only</strong>
+                        <p>Hides everything except eBird bird sightings. Great for focused birding sessions.</p>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <div class="overlay-btn">🏜️</div>
+                    <div>
+                        <strong>Set Location</strong>
+                        <p>Search for any place — city, park, zip code, or address — and fly the map there.</p>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <div class="overlay-btn">📍</div>
+                    <div>
+                        <strong>Reset GPS</strong>
+                        <p>Snaps the map back to wherever you physically are right now and rescans.</p>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <div class="overlay-btn">🪨</div>
+                    <div>
+                        <strong>Geology</strong>
+                        <p>Overlays a colorful geology map. Tap any spot on the map to identify the rock formation
+                            beneath your feet.</p>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <div class="overlay-btn">📋</div>
+                    <div>
+                        <strong>Land Parcels</strong>
+                        <p>Shows property ownership boundaries when you're zoomed in close enough. Tap a parcel to see
+                            who owns it.</p>
+                    </div>
+                </div>
+                <div class="overlay-item">
+                    <div class="overlay-btn" style="font-size:15px;">⧉</div>
+                    <div>
+                        <strong>Switch Map Style</strong>
+                        <p>Cycles through three map styles: Street map → USGS Topo → Satellite with roads.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tip">
+                <strong>Tip:</strong> You can also <strong>long-press anywhere on the map</strong> (right-click on
+                desktop) to drop a pin at that spot and instantly scan from there — no need to type an address.
+            </div>
+        </div>
+
+        <!-- SEARCH RADIUS -->
+        <div class="section">
+            <div class="section-label">Search area</div>
+            <h2>Adjusting your radius</h2>
+
+            <div class="card">
+                <h3>📡 The radius slider</h3>
+                <p>The slider at the top of the app controls how far out NAM! searches — from 1 mile up to 30 miles.
+                    Drag it left for a tight local search, right to see what's in a wider area.</p>
+                <p>Tap the green number chip (like <code>30 mi</code>) to type an exact distance. Hit Enter to confirm.
+                </p>
+            </div>
+
+            <div class="tip">
+                <strong>Tip:</strong> At home in the suburbs, 5–10 miles is usually ideal. At a nature preserve or state
+                park, crank it up to 20–30 miles to see what the surrounding region has to offer.
+            </div>
+        </div>
+
+        <!-- WHAT TO SCAN -->
+        <div class="section">
+            <div class="section-label">Filtering by life</div>
+            <h2>Choosing what to scan</h2>
+            <p>The row of chips below the radius bar lets you focus on one type of wildlife — or see everything at once.
+            </p>
+
+            <div class="taxa-row">
+                <div class="taxa-chip active">Birds 🐦</div>
+                <div class="taxa-chip">All Life 🌿</div>
+                <div class="taxa-chip">Plants 🌸</div>
+                <div class="taxa-chip">Insects 🦋</div>
+                <div class="taxa-chip">Mammals 🦊</div>
+                <div class="taxa-chip">Fungi 🍄</div>
+                <div class="taxa-chip">Reptiles 🐢</div>
+            </div>
+
+            <div class="tip" style="margin-top:16px;">
+                <strong>Birds</strong> is the default and shows the richest data — both iNaturalist and eBird combined.
+                <strong>All Life</strong> gives you the full picture of everything logged nearby. The others filter to
+                just that group.
+            </div>
+        </div>
+
+        <!-- DETAIL CARDS -->
+        <div class="section">
+            <div class="section-label">Detail cards</div>
+            <h2>Reading an observation card</h2>
+
+            <div class="card card-accent">
+                <h3>What you'll see on each card</h3>
+                <p><strong style="color:var(--text);">Photo</strong> — the observation photo from iNaturalist, if one
+                    was submitted. Tap it to zoom in. Pinch to zoom further on mobile.</p>
+                <p><strong style="color:var(--text);">Common name</strong> — the familiar name. Tap it to filter the
+                    entire map to just that species.</p>
+                <p><strong style="color:var(--text);">Scientific name</strong> — shown in green italic below the common
+                    name.</p>
+                <p><strong style="color:var(--text);">Date</strong> — when the sighting was reported.</p>
+                <p><strong style="color:var(--text);">Location</strong> — tap the blue location line to filter to all
+                    observations at that specific spot.</p>
+            </div>
+
+            <div class="card" style="margin-top:12px;">
+                <h3>The action buttons on each card</h3>
+                <div class="btn-row">
+                    <span class="btn-pill pill-green">iNat / eBird</span>
+                    <span class="btn-pill pill-blue">G-MAP</span>
+                    <span class="btn-pill pill-green">LOCATE</span>
+                    <span class="btn-pill pill-purple">📷 AMY</span>
+                </div>
+                <p style="margin-top:14px;"><strong style="color:var(--text);">iNat / eBird</strong> — opens the
+                    original observation on the source website so you can see all the details, photos, and comments.</p>
+                <p><strong style="color:var(--text);">G-MAP</strong> — opens Google Maps at the exact sighting
+                    coordinates.</p>
+                <p><strong style="color:var(--text);">LOCATE</strong> — zooms the map to this one observation and shows
+                    only its marker.</p>
+                <p><strong style="color:var(--text);">📷 AMY</strong> — appears on birds from your personal life list
+                    that have a photo saved. Opens your photo of that species.</p>
+            </div>
+
+            <div class="tip">
+                <strong>NOTABLE tag</strong> — a red badge means this is a rare or unusual bird for your region. Worth a
+                special look! <strong>OBSCURED tag</strong> — a gray badge means the exact location is hidden to protect
+                a sensitive species.
+            </div>
+        </div>
+
+        <!-- HEATMAP & HOTSPOTS -->
+        <div class="section">
+            <div class="section-label">Summary sections</div>
+            <h2>Species Heatmap &amp; Observation Hotspots</h2>
+            <p>Just below the map you'll find two summary panels that give you a bird's-eye view of the data.</p>
+
+            <div class="card">
+                <h3>🔥 Species Heatmap</h3>
+                <p>Every species observed nearby, listed alphabetically with how many times it appears. Tap any species
+                    name to instantly filter the map and cards to just that species. Use the <strong>🖼 GALLERY</strong>
+                    button to browse all observation photos in a photo grid.</p>
+            </div>
+
+            <div class="card" style="margin-top:12px;">
+                <h3>📍 Observation Hotspots</h3>
+                <p>Every reporting location ranked by how many observations were made there. Tap a location name to zoom
+                    the map to just that spot and see its sightings. Use the <strong>SORT</strong> button to switch
+                    between ranking by count or alphabetically by name.</p>
+                <p style="margin-top:8px;">A 🔒 lock icon next to a location means its coordinates are obscured for that
+                    species.</p>
+            </div>
+        </div>
+
+        <!-- LIFE LIST -->
+        <div class="section">
+            <div class="section-label">Your bird list</div>
+            <h2>The Life List</h2>
+            <p>Tap <strong>📖 LIFE</strong> in the bottom bar to open your personal life list — every bird species
+                tracked, with seen and unseen status.</p>
+
+            <div class="card card-accent">
+                <h3>What you can do in the Life List</h3>
+                <p><strong style="color:var(--text);">Search</strong> — type any part of a common name or scientific
+                    name to find a species instantly.</p>
+                <p><strong style="color:var(--text);">Filter</strong> — tap ALL, ✅ SEEN, or ○ NEED to focus on just the
+                    birds you've seen or still need.</p>
+                <p><strong style="color:var(--text);">Groups</strong> — species are organized by bird family group
+                    (Ducks, Warblers, Sparrows, etc.) in alphabetical order.</p>
+                <p><strong style="color:var(--text);">🐦 eBird button</strong> — tapping the green bird button on any
+                    row opens that species page on eBird for range maps, photos, and sounds.</p>
+                <p><strong style="color:var(--text);">📷 Photo button</strong> — purple camera icon appears if you have
+                    a personal photo saved for that bird. Taps open it.</p>
+            </div>
+        </div>
+
+        <!-- TARGET BIRDS -->
+        <div class="section">
+            <div class="section-label">Wanted species</div>
+            <h2>🎯 Target Birds</h2>
+            <p>After a scan, the bottom bar shows a <strong>🎯 TARGETS</strong> button with a count of how many birds
+                from your "still need to see" list were spotted nearby recently.</p>
+
+            <div class="card">
+                <h3>How targets work</h3>
+                <p>Any bird on your life list that you haven't seen yet is a target. When NAM! finds a recent sighting
+                    of one near you, its detail card gets a <strong style="color:var(--purple);">purple left
+                        border</strong> to make it stand out.</p>
+                <p style="margin-top:8px;">Tap <strong>🎯 TARGETS</strong> in the bottom bar to instantly filter the map
+                    and cards to only show those birds. This is your "what can I go find right now?" view.</p>
+            </div>
+        </div>
+
+        <!-- SET LOCATION -->
+        <div class="section">
+            <div class="section-label">Going somewhere</div>
+            <h2>Scanning a different location</h2>
+            <p>You don't have to be there to scan there. Great for planning a trip before you leave home.</p>
+
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-body">
+                        <strong>Tap 🏜️ Set Location on the map, or in Advanced Configuration</strong>
+                        <p>A search box appears with quick-tap shortcuts for popular spots.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-body">
+                        <strong>Type any place name or address</strong>
+                        <p>City names, national park names, zip codes, street addresses — all work. If the first search
+                            doesn't find it, try adding the state name.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-body">
+                        <strong>Tap Fly There</strong>
+                        <p>The map swoops to that location and a fresh scan runs automatically.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tip">
+                <strong>Planning a hike?</strong> Scan your destination at home before you leave. NAM! saves the results
+                — if you lose cell service on the trail, everything you loaded is still there waiting for you.
+            </div>
+        </div>
+
+        <!-- OFFLINE USE -->
+        <div class="section">
+            <div class="section-label">No signal? No problem</div>
+            <h2>Using NAM! without cell service</h2>
+
+            <div class="card card-accent">
+                <h3>How offline mode works</h3>
+                <p>NAM! automatically saves your last scan to your device. If you lose signal — or intentionally go
+                    somewhere without service — the app shows a <strong style="color:var(--purple);">purple offline
+                        banner</strong> at the top and switches to that saved data.</p>
+                <p style="margin-top:8px;">All the markers, species lists, and detail cards are still fully usable. Map
+                    tiles you've already viewed are also cached and will display without internet.</p>
+            </div>
+
+            <div class="card" style="margin-top:12px;">
+                <h3>📍 Reset GPS while offline</h3>
+                <p>Your phone's GPS chip works completely without cell service — it talks to satellites, not the
+                    internet. So even offline, you can tap <strong>📍 Reset GPS</strong> to update your white location
+                    dot to wherever you are now on the trail. The map pans to you without disturbing any of the saved
+                    sightings or your current zoom level.</p>
+            </div>
+
+            <div class="tip">
+                <strong>Best practice for a day trip:</strong> Do a scan at home or wherever you have WiFi before you
+                leave. The app caches everything. Once you arrive at your destination — even with no signal — your
+                sightings, photos, and map are all there.
+            </div>
+        </div>
+
+        <!-- NAVIGATION BAR -->
+        <div class="section">
+            <div class="section-label">Getting around</div>
+            <h2>The bottom navigation bar</h2>
+            <p>After a scan, a navigation bar appears at the bottom of your screen for quick jumping.</p>
+
+            <div class="dock-illustration">
+                <span class="dock-btn-ill">🎯 Targets</span>
+                <span class="dock-btn-ill">🔥 Heat</span>
+                <span class="dock-btn-ill">📍 Loc</span>
+                <span class="dock-btn-ill">📋 List</span>
+                <span class="dock-btn-ill">📖 Life</span>
+            </div>
+
+            <div class="card" style="margin-top:16px;">
+                <p><strong style="color:var(--text);">🎯 Targets</strong> — filters to only your wanted birds (hidden
+                    until targets are found nearby).</p>
+                <p><strong style="color:var(--text);">🔥 Heat</strong> — jumps to the Species Heatmap.</p>
+                <p><strong style="color:var(--text);">📍 Loc</strong> — jumps to the Observation Hotspots list.</p>
+                <p><strong style="color:var(--text);">📋 List</strong> — jumps to the Detail Cards.</p>
+                <p><strong style="color:var(--text);">📖 Life</strong> — opens your full Life List.</p>
+            </div>
+
+            <div class="tip">
+                <strong>The ↑ circle button</strong> in the bottom right corner scrolls you back to the top of the page
+                when nothing is filtered. When a filter is active it turns red and shows <strong>X</strong> — tap it to
+                clear the filter and zoom back out to all sightings.
+            </div>
+        </div>
+
+        <!-- GALLERY -->
+        <div class="section">
+            <div class="section-label">Photos</div>
+            <h2>🖼 Photo Gallery</h2>
+
+            <div class="card">
+                <h3>Browsing observation photos</h3>
+                <p>Tap the <strong>🖼 GALLERY</strong> button in the Species Heatmap header to open a photo grid of
+                    every observation that has an image.</p>
+                <p style="margin-top:8px;">The gallery respects whatever filter is active — so if you're already
+                    filtered to one species or location, the gallery shows only those photos. Tap any photo to jump to
+                    that observation's detail card.</p>
+                <p style="margin-top:8px;">On the detail cards, tap a photo to zoom in. On mobile, pinch with two
+                    fingers to zoom in further.</p>
+            </div>
+        </div>
+
+        <!-- LOCATION RESOURCES -->
+        <div class="section">
+            <div class="section-label">Extras</div>
+            <h2>Location Resources</h2>
+            <p>In <strong>⚙️ Advanced Configuration → About this location</strong>, you'll find a set of links
+                automatically pointed at your current scan location:</p>
+
+            <div class="card">
+                <p><strong style="color:var(--text);">☁️ NWS Local Forecast</strong> — official National Weather Service
+                    forecast for your exact spot.</p>
+                <p><strong style="color:var(--text);">🌪️ Windy.com</strong> — detailed wind and weather radar — great
+                    for birding days.</p>
+                <p><strong style="color:var(--text);">🌿 iNat Observations</strong> — opens iNaturalist's website
+                    centered on your location.</p>
+                <p><strong style="color:var(--text);">🪨 Macrostrat Geology</strong> — full geological map of the area.
+                </p>
+                <p><strong style="color:var(--text);">🗺️ The National Map</strong> — USGS topographic map viewer.</p>
+                <p><strong style="color:var(--text);">🚲 OpenStreetMap</strong> — detailed street and trail map.</p>
+                <p><strong style="color:var(--text);">🥾 AllTrails</strong> — hiking trails near your location.</p>
+                <p><strong style="color:var(--text);">📖 Wikipedia Nearby</strong> — Wikipedia articles about places
+                    near you.</p>
+                <p><strong style="color:var(--text);">🗺️ Google Maps</strong> — opens Google Maps at your scan
+                    location.</p>
+            </div>
+        </div>
+
+        <!-- TIPS -->
+        <div class="section">
+            <div class="section-label">Quick tips</div>
+            <h2>Things worth knowing</h2>
+
+            <div class="card">
+                <h3>💡 Drag your location dot</h3>
+                <p>The white dot on the map is draggable. Pull it to a new spot and NAM! will automatically rescan from
+                    there — handy for checking what's at a nearby park without typing an address.</p>
+            </div>
+
+            <div class="card" style="margin-top:12px;">
+                <h3>💡 Right-click (or long-press) the map</h3>
+                <p>On desktop, right-click anywhere on the map to instantly drop a pin and scan from that point. On
+                    mobile, long-press works the same way.</p>
+            </div>
+
+            <div class="card" style="margin-top:12px;">
+                <h3>💡 Dark / Light theme</h3>
+                <p>In Advanced Configuration, tap <strong>🌗 THEME</strong> to switch between the dark forest theme and
+                    a light daytime mode — useful in bright sunlight outdoors.</p>
+            </div>
+
+            <div class="card" style="margin-top:12px;">
+                <h3>💡 Scan data is from the past week</h3>
+                <p>NAM! shows observations from the last 7 days. So if something was seen at a spot yesterday, it'll
+                    show up. Check back after visiting a location — your own sightings submitted to iNaturalist or eBird
+                    will appear in future scans.</p>
+            </div>
+
+            <div class="card" style="margin-top:12px;">
+                <h3>💡 Add to your home screen</h3>
+                <p>On iPhone: tap the Share button in Safari → Add to Home Screen. On Android: tap the browser menu →
+                    Add to Home Screen. NAM! installs like an app with no App Store required.</p>
+            </div>
+        </div>
+
+        <hr class="divider">
+
+    </div><!-- /container -->
+
+    <footer>
+        NAM! Nature Around Me · v2.0.0 · Field Guide
+    </footer>
+
+</body>
+
+</html>

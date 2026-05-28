@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- ═══════════════════════════════════════════════
+         VERSION — update this one string to bust all
+         JS, CSS, and SW caches in one shot.
+         Must match APP_VERSION in nam-sw.js.
+    ════════════════════════════════════════════════ -->
+    <script>const NAM_VERSION = 'v2.3.5';</script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="apple-touch-icon" href="NAM.png">
+    <meta name="theme-color" content="#4ade80">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // Inject versioned CSS link so cache bust is automatic
+        document.write('<link rel="stylesheet" href="nam.css?' + NAM_VERSION + '">');
+        document.title = 'NAM! ' + NAM_VERSION;
+        document.addEventListener('DOMContentLoaded', function () {
+            var el = document.getElementById('scanBtnVersion');
+            if (el) el.textContent = NAM_VERSION;
+        });
+    </script>
+    <script>
+        // Inline manifest — bypasses InfinityFree bot protection on .json files
+        (function () {
+            const base = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '');
+            const manifest = {
+                name: 'NAM! Nature Around Me',
+                short_name: 'NAM!',
+                description: 'Real-time wildlife observations near your location — birds, plants, insects and more from iNaturalist and eBird.',
+                start_url: base + '/',
+                scope: base + '/',
+                display: 'standalone',
+                orientation: 'portrait-primary',
+                background_color: '#06120a',
+                theme_color: '#4ade80',
+                lang: 'en-US',
+                icons: [
+                    { src: base + '/NAM.png', sizes: '180x180', type: 'image/png', purpose: 'any' },
+                    { src: base + '/NAM-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+                    { src: base + '/NAM-192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+                    { src: base + '/NAM-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+                    { src: base + '/NAM-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+                ],
+                categories: ['nature', 'outdoors', 'science', 'utilities'],
+                screenshots: [
+                    {
+                        src: base + '/screenshot-mobile.png',
+                        sizes: '390x844',
+                        type: 'image/png',
+                        label: 'NAM! showing wildlife sightings near your location'
+                    },
+                    {
+                        src: base + '/screenshot-desktop.png',
+                        sizes: '1280x800',
+                        type: 'image/png',
+                        form_factor: 'wide',
+                        label: 'NAM! desktop view with map and observation cards'
+                    }
+                ]
+            };
+            const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+            const link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = URL.createObjectURL(blob);
+            document.head.appendChild(link);
+        })();
+    </script>
+</head>
+
+<body>
+    <div class="app-wrapper">
+
+        <div class="action-row" style="margin-bottom:10px;">
+            <button id="scanBtn">NAM! SCAN NATURE<span id="scanBtnVersion"
+                    style="display:block;font-size:10px;font-weight:400;opacity:0.6;letter-spacing:1px;"></span></button>
+        </div>
+
+        <div id="scanHint"
+            style="text-align:center; color:var(--text-dim); font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">
+            📡 Tap to scan nature observations near your location
+        </div>
+
+        <div id="offlineBanner">📵 OFFLINE MODE — Showing cached scan</div>
+
+        <div id="radiusRow"
+            style="display:flex; align-items:center; gap:10px; background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:10px 14px; margin-bottom:10px;">
+            <span class="config-label" style="margin:0; white-space:nowrap; font-size:10px;">RADIUS</span>
+            <input type="range" id="radius" min="1" max="30" value="30" style="flex:1;">
+            <span id="radiusChip" title="Tap to type exact distance">30 mi</span>
+            <input type="number" id="radiusInput" min="1" max="30" placeholder="mi">
+            <button id="gearBtn" title="Settings" aria-label="Open settings">⚙️</button>
+            <a href="nam-guide.html" target="_blank" id="helpBtn" title="Field Guide / Help"
+                aria-label="Open field guide"
+                style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--text-dim);font-size:16px;font-weight:900;text-decoration:none;flex-shrink:0;transition:border-color 0.15s,color 0.15s;line-height:1;box-sizing:border-box;vertical-align:middle;align-self:center;">?</a>
+        </div>
+
+        <div class="taxa-bar" id="taxaBar">
+            <div class="chip active" data-taxon="3">Birds 🐦</div>
+            <div class="chip" data-taxon="null">All Life 🌿</div>
+            <div class="chip" data-taxon="47126">Plants 🌸</div>
+            <div class="chip" data-taxon="47158">Insects 🦋</div>
+            <div class="chip" data-taxon="40151">Mammals 🦊</div>
+            <div class="chip" data-taxon="47170">Fungi 🍄</div>
+            <div class="chip" data-taxon="26036">Reptiles 🐢</div>
+        </div>
+
+        <div id="lifeListBar" style="display:none;">
+            <span id="lifeListBarLabel">📖 LIFE LIST</span>
+            <span id="lifeListBarStats"></span>
+            <span style="opacity:0.5;">›</span>
+        </div>
+
+        <div id="scanProgress">
+            <div class="sp-banner">
+                <div class="sp-spinner"></div>
+                <div>
+                    <div class="sp-label" id="spLabel">SCANNING…</div>
+                    <div class="sp-sublabel" id="spSublabel">Starting up</div>
+                </div>
+            </div>
+            <div class="sp-sources">
+                <div class="sp-source-row">
+                    <div class="sp-dot waiting" id="spDotWanted"></div><span class="sp-source-name">Wanted
+                        List</span><span class="sp-source-status" id="spStatusWanted">Waiting…</span><span
+                        class="sp-source-count" id="spCountWanted"></span>
+                </div>
+                <div class="sp-source-row">
+                    <div class="sp-dot waiting" id="spDotInat"></div><span
+                        class="sp-source-name">iNaturalist</span><span class="sp-source-status"
+                        id="spStatusInat">Waiting…</span><span class="sp-source-count" id="spCountInat"></span>
+                </div>
+                <div class="sp-source-row" id="spRowEbird">
+                    <div class="sp-dot waiting" id="spDotEbird"></div><span class="sp-source-name">eBird</span><span
+                        class="sp-source-status" id="spStatusEbird">Waiting…</span><span class="sp-source-count"
+                        id="spCountEbird"></span>
+                </div>
+            </div>
+            <div class="sp-progress">
+                <div id="spProgressBar"></div>
+            </div>
+            <div id="spTicker">Initializing…</div>
+        </div>
+
+        <div id="status">
+            <span id="stat-wanted" class="stat-part">WANTED LIST</span>
+            <span id="stat-inat" class="stat-part">iNATURALIST</span>
+            <span id="stat-ebird" class="stat-part">eBIRD</span>
+        </div>
+
+        <div id="mapWrapper" style="position:relative; display:none; margin-bottom:20px;">
+            <div id="map" style="margin-bottom:0!important;"></div>
+            <div id="mapOverlayBtns"
+                style="position:absolute; top:12px; left:12px; z-index:500; display:flex; flex-direction:column; gap:6px;">
+                <button id="mapBtnEbird" class="map-overlay-btn" title="eBird Only">&#x1F426;</button>
+                <button id="mapBtnSetLoc" class="map-overlay-btn" title="Set Location">&#x1F3DC;&#xFE0F;</button>
+                <button id="mapBtnResetGPS" class="map-overlay-btn" title="Reset GPS">&#x1F4CD;</button>
+                <button id="mapBtnGeo" class="map-overlay-btn" title="Macrostrat Geology">&#x1FAA8;</button>
+                <button id="mapBtnParcel" class="map-overlay-btn parcel-disabled"
+                    title="Zoom in to enable land parcels (zoom &ge; 15)">&#x1F4CB;</button>
+                <button id="mapBtnBasemap" class="map-overlay-btn" title="Switch base map" style="font-size:14px;"><svg
+                        width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                        <polyline points="2 17 12 22 22 17" />
+                        <polyline points="2 12 12 17 22 12" />
+                    </svg></button>
+            </div>
+            <div id="geoOpacityFloat">
+                <span>&#x1FAA8; GEO</span>
+                <input type="range" id="geoOpacityFloatSlider" min="10" max="100" value="70">
+                <span id="geoOpacityFloatLabel">70%</span>
+            </div>
+        </div>
+
+        <div id="summaryArea" style="display:none;">
+            <div class="summary-box" id="speciesScrollTarget" style="padding:0; overflow:hidden;">
+                <div class="summary-collapse-header" id="speciesHeader">
+                    <h3 class="config-label" style="margin:0;">Species Heatmap <span id="speciesCount"
+                            style="color:var(--text-dim);font-weight:400;font-size:10px;margin-left:6px;"></span></h3>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <button id="galleryBtn"
+                            style="font-size:13px; font-weight:900; cursor:pointer; color:var(--accent); background:var(--bg-dark); padding:6px 10px; border-radius:8px; border:1px solid var(--border); white-space:nowrap;">&#x1F5BC;
+                            GALLERY</button>
+                        <span id="speciesChevron" class="chevron rotated" style="font-size:14px;">▼</span>
+                    </div>
+                </div>
+                <div id="speciesCollapse" class="summary-collapse-body">
+                    <div id="speciesContent" class="summary-list"></div>
+                </div>
+            </div>
+            <div class="summary-box" id="locationScrollTarget" style="padding:0; overflow:hidden;">
+                <div class="summary-collapse-header" id="locationHeader">
+                    <h3 class="config-label" style="margin:0;">Observation Hotspots <span id="locationCount"
+                            style="color:var(--text-dim);font-weight:400;font-size:10px;margin-left:6px;"></span></h3>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div id="sortToggleBtn"
+                            style="font-size:13px; font-weight:900; cursor:pointer; color:var(--accent); background:var(--bg-dark); padding:6px 10px; border-radius:8px; border:1px solid var(--border);">
+                            SORT: <span id="sortLabel">RANK</span></div>
+                        <span id="locationChevron" class="chevron rotated" style="font-size:14px;">▼</span>
+                    </div>
+                </div>
+                <div id="locationCollapse" class="summary-collapse-body">
+                    <div id="locationContent" class="summary-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="summary-box" id="resultsScrollTarget"
+            style="padding:0; overflow:hidden; margin-top:0; display:none;">
+            <div class="summary-collapse-header" id="resultsHeader">
+                <h3 class="config-label" style="margin:0;">&#x1F4CB; Detail Cards</h3>
+                <span id="resultsChevron" class="chevron" style="font-size:14px;">▼</span>
+            </div>
+            <div id="resultsCollapse" class="summary-collapse-body open">
+                <div id="results" style="padding-top:8px;"></div>
+            </div>
+        </div>
+
+        <div class="collapsible-container" style="margin-top:20px;" id="advancedConfig">
+            <div class="collapsible-header" id="configHeader">
+                <span class="config-label" style="margin:0; font-size:13px;">⚙️ Advanced Configuration</span>
+                <span id="collapsibleChevron" class="chevron">▼</span>
+            </div>
+            <div id="collapsibleContent" class="collapsible-content">
+                <div class="info-card-container" style="margin-top:12px;">
+                    <div class="info-card-header" id="aboutHeader">
+                        <span class="config-label" style="margin:0;">ℹ️ About this location</span>
+                        <span id="aboutChevron" class="chevron" style="font-size:12px;">▼</span>
+                    </div>
+                    <div id="aboutContent" class="info-card-content">
+                        <div id="locStatusMsg" style="color:var(--text-dim); font-style:italic;">No location data.
+                            Initiate a scan to grab GPS.</div>
+                        <div id="locDetails" style="display:none;">
+                            <div class="loc-data-row"><span class="loc-data-label">LAT:</span> <span
+                                    id="echoLat">--</span></div>
+                            <div class="loc-data-row"><span class="loc-data-label">LNG:</span> <span
+                                    id="echoLng">--</span></div>
+                            <div style="margin-top:15px; border-top:1px solid var(--border); padding-top:12px;">
+                                <div class="config-label" style="font-size:9px; margin-bottom:10px;">Location Resources
+                                </div>
+                                <a id="linkWeather" href="#" target="_blank" class="external-link-btn">☁️ NWS Local
+                                    Forecast</a>
+                                <a id="linkWindy" href="#" target="_blank" class="external-link-btn">🌪️ Windy.com
+                                    Outlook</a>
+                                <a id="linkINat" href="#" target="_blank" class="external-link-btn">🌿 iNat
+                                    Observations</a>
+                                <a id="linkMacro" href="#" target="_blank" class="external-link-btn">🪨 Macrostrat
+                                    Geology</a>
+                                <a id="linkNatMap" href="#" target="_blank" class="external-link-btn">🗺️ The National
+                                    Map</a>
+                                <a id="linkOSM" href="#" target="_blank" class="external-link-btn">🚲 OpenStreetMap</a>
+                                <a id="linkTrails" href="#" target="_blank" class="external-link-btn">🥾 AllTrails
+                                    Explorer</a>
+                                <a id="linkWiki" href="#" target="_blank" class="external-link-btn">📖 Wikipedia
+                                    Nearby</a>
+                                <a id="linkGMap" href="#" target="_blank" class="external-link-btn"
+                                    style="border-color:var(--link-blue); color:var(--link-blue);">🗺️ View on Google
+                                    Maps</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="config-btn-row">
+                    <button class="loc-btn" id="btnResetGPS"><span>📍</span><span>RESET GPS</span></button>
+                    <button class="loc-btn" id="btnSetLoc"><span>🏜️</span><span>SET LOC</span></button>
+                    <button id="toggleEbird" class="loc-btn" style="display:none;"><span>🐦</span><span>eB
+                            ONLY</span></button>
+                    <button class="loc-btn" id="btnSync"
+                        style="border-color:var(--link-blue); color:var(--link-blue);"><span>🔄</span><span>SYNC</span></button>
+                    <button class="theme-toggle" id="btnTheme"><span>🌗</span><span>THEME</span></button>
+                    <button class="loc-btn" id="btnReload"
+                        style="border-color:#f97316; color:#f97316;"><span>↺</span><span>RELOAD</span></button>
+                    <button class="loc-btn" id="btnDebug"
+                        style="border-color:#a855f7; color:#a855f7;"><span>🐛</span><span>DEBUG</span></button>
+                </div>
+                <div id="debugPanel"
+                    style="display:none; background:#000; border:1px solid #333; border-radius:12px; margin-top:12px; overflow:hidden; font-family:monospace;">
+                    <div
+                        style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:#111; border-bottom:1px solid #333;">
+                        <span
+                            style="font-size:11px; font-weight:900; color:#4ade80; text-transform:uppercase; letter-spacing:1px;">🐛
+                            Debug Log</span>
+                        <div style="display:flex; gap:6px;">
+                            <button id="debugClearBtn"
+                                style="background:transparent; color:#666; border:1px solid #333; border-radius:6px; padding:3px 10px; font-size:10px; font-weight:900; cursor:pointer; text-transform:uppercase;">Clear</button>
+                            <button id="debugCopyBtn"
+                                style="background:#1e3a5f; color:#38bdf8; border:1px solid #38bdf8; border-radius:6px; padding:3px 10px; font-size:10px; font-weight:900; cursor:pointer; text-transform:uppercase;">📋
+                                Copy</button>
+                        </div>
+                    </div>
+                    <div id="debugLog"
+                        style="height:220px; overflow-y:auto; padding:8px 10px; font-size:10px; line-height:1.6; color:#aaa;">
+                    </div>
+                </div>
+
+                <div class="radius-container">
+                    <div class="config-label">Map Style & Overlays</div>
+                    <select id="mapType" class="map-select">
+                        <optgroup label="Base Maps">
+                            <option value="hybrid">Hybrid (Satellite + Roads)</option>
+                            <option value="satellite">Satellite (Imagery Only)</option>
+                            <option value="streets" selected>Streets (OpenStreetMap)</option>
+                            <option value="mapbox-streets">Streets (Mapbox)</option>
+                            <option value="terrain">Terrain (Topo)</option>
+                            <option value="usgs">USGS (US Topo)</option>
+                            <option value="dark">Dark Mode (Carto)</option>
+                        </optgroup>
+                        <optgroup label="Overlays">
+                            <option value="geology_macro">Macrostrat Geology Overlay</option>
+                            <option value="geology_sgmc">USGS SGMC Overlay</option>
+                            <option value="none">Clear Overlays</option>
+                        </optgroup>
+                    </select>
+                    <div id="overlayControls" style="display:none; margin-top:15px;">
+                        <div class="config-label">Overlay Opacity: <span id="opacityLabel"
+                                style="color:var(--text-main);">70%</span></div>
+                        <input type="range" id="overlayOpacity" min="10" max="100" value="70" style="width:100%;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gallery Modal -->
+    <div id="galleryModal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-dark); z-index:9500; overflow-y:auto;">
+        <div style="max-width:900px; margin:0 auto; padding:16px 16px 120px 16px;">
+            <div
+                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; position:sticky; top:0; background:var(--bg-dark); padding:12px 0; z-index:10; border-bottom:1px solid var(--border);">
+                <span class="config-label" style="margin:0; font-size:14px;">&#x1F5BC; PHOTO GALLERY</span>
+                <button id="galleryCloseBtn"
+                    style="background:var(--notable-red); color:#fff; border:none; padding:8px 18px; border-radius:10px; font-weight:900; font-size:13px; cursor:pointer;">✕
+                    CLOSE</button>
+            </div>
+            <div id="galleryGrid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:4px;"></div>
+        </div>
+    </div>
+
+    <!-- Life List Modal -->
+    <div id="lifeListModal">
+        <div class="ll-header">
+            <span class="ll-title">📖 Life List</span>
+            <span id="llSeenCount"
+                style="font-size:12px; color:var(--text-dim); font-weight:700; margin-right:8px;"></span>
+            <button class="ll-close-btn" id="llCloseBtn">✕ CLOSE</button>
+        </div>
+        <div class="ll-controls">
+            <div class="ll-search-wrap">
+                <input type="search" id="llSearch" placeholder="🔍 Search species…" autocomplete="off">
+                <button id="llClearSearch" title="Clear search">✕</button>
+            </div>
+            <div class="ll-filter-row">
+                <button class="ll-filter-btn active-all" data-filter="all" id="llBtnAll">ALL</button>
+                <button class="ll-filter-btn" data-filter="seen" id="llBtnSeen">✅ SEEN</button>
+                <button class="ll-filter-btn" data-filter="unseen" id="llBtnUnseen">○ NEED</button>
+            </div>
+        </div>
+        <div class="ll-stats" id="llStats"></div>
+        <div id="llBody"></div>
+    </div>
+
+    <!-- Nav Dock -->
+    <div id="navDock">
+        <button id="btnWantedList" class="dock-btn" style="display:none;">🎯 TARGETS</button>
+        <button id="btnNotableList" class="dock-btn" style="display:none;">⭐ NOTABLE</button>
+        <button id="btnJumpHeat" class="dock-btn">🔥 HEAT</button>
+        <button id="btnJumpLoc" class="dock-btn">📍 LOC</button>
+        <button id="btnJumpList" class="dock-btn">📋 LIST</button>
+    </div>
+    <button id="actionCircle">↑</button>
+
+    <!-- Location Modal -->
+    <div id="locModal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000;">
+        <div
+            style="background:var(--card-bg); padding:25px; border-radius:20px; border:2px solid var(--accent); width:90%; max-width:400px; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);">
+            <h3 class="config-label">Set Custom Location</h3>
+            <input type="text" id="locInput" placeholder="Zip, City, or Park..."
+                style="width:100%; padding:15px; border-radius:12px; border:1px solid var(--accent); background:var(--bg-dark); color:var(--text-main); font-size:18px; margin-bottom:15px;">
+            <div id="quickChips" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;">
+                <div class="quick-chip" data-loc="Lake City, CO" data-lat="38.0297" data-lng="-107.3120">⛰️ LAKE CITY</div>
+                <div class="quick-chip" data-loc="Las Vegas, NV">✈️ LAS VEGAS</div>
+                <div class="quick-chip" data-loc="Grand Canyon National Park South Rim">🌵 GRAND CANYON</div>
+                <div class="quick-chip" data-loc="Zion National Park">🌵 ZION</div>
+                <div class="quick-chip" data-loc="Bryce Canyon National Park">🌵 BRYCE CANYON</div>
+                <div class="quick-chip" data-loc="Big Bend NATIONAL PARK">🌵 BIG BEND</div>
+                <div class="quick-chip" data-loc="6465 Refuge Rd, Sherman, TX">💧 HAGERMAN</div>
+                <div class="quick-chip" data-loc="101 Mill Wood Dr., Colleyville, TX">🌿 COLLEYVILLE</div>
+                <div class="quick-chip" data-loc="Acton Nature Center of Hood County">🌿 ACTON NATURE</div>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button id="btnCancelLoc"
+                    style="background:var(--border); color:var(--text-main); flex:1; padding:12px; border-radius:12px; border:none; font-weight:900;">Cancel</button>
+                <button id="btnSubmitLoc"
+                    style="background:var(--accent); color:#000; flex:1; padding:12px; border-radius:12px; border:none; font-weight:900;">Fly
+                    There</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="zoomOverlay" class="zoom-overlay"></div>
+    <div id="zoomViewer"><img id="zoomViewerImg" src="" alt=""></div>
+    <button id="zoomCloseBtn" aria-label="Close image">✕</button>
+
+    <script>
+        // Inject versioned script tags — NAM_VERSION is the single source of truth
+        document.write('<script src="nam-config.js?' + NAM_VERSION + '"><\/script>');
+        document.write('<script src="nam.js?' + NAM_VERSION + '"><\/script>');
+    </script>
+
+</body>
+
+</html>
