@@ -63,7 +63,7 @@ page, abuse the Mapbox token, phish). Remotely triggerable, bounded impact.
 
 | # | Finding | Severity | Action |
 |---|---------|----------|--------|
-| N2 | **Mapbox token** in `nam-config.js` is a public `pk.` token (expected in client code), but if **un-restricted** anyone can lift it and burn your quota/bill | Medium | Add URL/domain restrictions to the token in the Mapbox account dashboard |
+| N2 | **Mapbox token** in `nam-config.js` is a public `pk.` token (expected in client code), but if **un-restricted** anyone can lift it and burn your quota/bill | Medium | ✅ **Resolved 2026-05-29** — token URL-restricted in the Mapbox account dashboard |
 | N3 | **Google Apps Script** `/exec` URL is publicly readable (returns the life list to anyone) | Low | Confirm the script has no unauthenticated `doPost` that could mutate the sheet; accept the read exposure or add a token |
 
 ---
