@@ -9,7 +9,7 @@ const MAPBOX_TOKEN     = 'pk.eyJ1IjoiY2hhcmxlc2xvZ2ljIiwiYSI6ImNtbzd0cnUzNDA1aXA
 const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzS1DjJONkIGz2WEh0hT_6feZNYOE6RN73Iz_LxRk8rHvxAR-xzXUNnD_vk-r06QWKA/exec';
 
 // ── App Identity ──────────────────────────────────────────────────────────────
-const APP_VERSION = 'v2.3.5';
+const APP_VERSION = 'v2.3.6';
 
 // ── Cache Settings ────────────────────────────────────────────────────────────
 const LIFE_CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // Life list cache duration (1 week)
