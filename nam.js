@@ -20,6 +20,20 @@
         let maxCachedZoom = 16; // tracks highest zoom browsed; saved with obs cache
 
         // ─────────────────────────────────────────────
+        //  OUTPUT ENCODING — third-party data (iNat/eBird place names, common
+        //  names, dates, photo/observation URLs) is rendered into innerHTML.
+        //  esc() guards text + quoted-attribute contexts; safeUrl() rejects any
+        //  scheme other than http/https (blocks javascript:/data: in href/src).
+        // ─────────────────────────────────────────────
+        const esc = s => String(s ?? '')
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        const safeUrl = u => {
+            const s = String(u ?? '');
+            return /^https?:\/\//i.test(s) ? esc(s) : '#';
+        };
+
+        // ─────────────────────────────────────────────
         //  DEBUG LOGGER
         // ─────────────────────────────────────────────
         const DEBUG_MAX = 100;
@@ -1011,7 +1025,7 @@
                             if (Array.isArray(d) && d.length > 0 && d[0].units) { const unit = d[0].units[0]; unitName = unit.unit_name || unit.strat_name; age = unit.age; lith = unit.lith; desc = unit.environ || unit.descrip; }
                             else { unitName = d.name || d.map_info?.name || 'Unknown Unit'; age = d.age || d.map_info?.age || 'Unknown Age'; lith = Array.isArray(d.rocktype) ? d.rocktype.join(', ') : (d.rocktype || 'Not specified'); desc = d.desc || d.map_info?.descrip || 'Surface/Map unit details.'; }
                             const macroUrl = `https://macrostrat.org/map/loc/${lng}/${lat}#x=${lng}&y=${lat}&z=12`;
-                            popup.setContent(`<div style="min-width:280px;color:var(--text-main);font-size:16px;"><h4 style="margin:0 0 10px 0;color:var(--accent);text-transform:uppercase;font-size:20px;font-weight:900;line-height:1.2;">${unitName}</h4><div style="margin-bottom:12px;font-weight:800;"><span style="opacity:0.7;font-weight:400;font-size:14px;text-transform:uppercase;">Age:</span> ${age}</div><div style="background:rgba(255,255,255,0.08);padding:15px;border-radius:12px;border:1px solid var(--border);"><b style="color:var(--accent);font-size:12px;text-transform:uppercase;letter-spacing:1px;">Lithology</b><div style="margin-top:6px;font-weight:700;line-height:1.4;">${lith}</div><hr style="border:0;border-top:1px solid var(--border);margin:12px 0;"><div class="geo-scroll-box"><span style="opacity:0.95;font-size:15px;line-height:1.5;">${desc}</span></div><div style="margin-top:15px;text-align:center;padding-top:10px;border-top:1px dashed var(--border);"><a href="${macroUrl}" target="_blank" style="color:var(--link-blue);font-size:12px;font-weight:900;text-decoration:none;text-transform:uppercase;">🌐 View Full Macrostrat Map</a></div></div></div>`);
+                            popup.setContent(`<div style="min-width:280px;color:var(--text-main);font-size:16px;"><h4 style="margin:0 0 10px 0;color:var(--accent);text-transform:uppercase;font-size:20px;font-weight:900;line-height:1.2;">${esc(unitName)}</h4><div style="margin-bottom:12px;font-weight:800;"><span style="opacity:0.7;font-weight:400;font-size:14px;text-transform:uppercase;">Age:</span> ${esc(age)}</div><div style="background:rgba(255,255,255,0.08);padding:15px;border-radius:12px;border:1px solid var(--border);"><b style="color:var(--accent);font-size:12px;text-transform:uppercase;letter-spacing:1px;">Lithology</b><div style="margin-top:6px;font-weight:700;line-height:1.4;">${esc(lith)}</div><hr style="border:0;border-top:1px solid var(--border);margin:12px 0;"><div class="geo-scroll-box"><span style="opacity:0.95;font-size:15px;line-height:1.5;">${esc(desc)}</span></div><div style="margin-top:15px;text-align:center;padding-top:10px;border-top:1px dashed var(--border);"><a href="${safeUrl(macroUrl)}" target="_blank" style="color:var(--link-blue);font-size:12px;font-weight:900;text-decoration:none;text-transform:uppercase;">🌐 View Full Macrostrat Map</a></div></div></div>`);
                         } else { popup.setContent("<div style='font-size:14px;font-weight:700;color:var(--text-dim);'>NO DATA FOUND.</div>"); }
                     } catch (err) { popup.setContent("<div style='color:var(--notable-red);font-weight:900;'>API ERROR</div>"); }
                 });
@@ -1149,9 +1163,9 @@
             const locationCount = Object.keys(locs).length;
             const scEl = document.getElementById('speciesCount'); if (scEl) scEl.textContent = speciesCount > 0 ? `(${speciesCount})` : '';
             const lcEl = document.getElementById('locationCount'); if (lcEl) lcEl.textContent = locationCount > 0 ? `(${locationCount})` : '';
-            document.getElementById('speciesContent').innerHTML = Object.entries(species).sort((a, b) => a[0].localeCompare(b[0])).map(([n, c]) => `<div class="summary-item" data-value="${encodeURIComponent(n)}">${n}</div><div style="padding:12px 0;">${c}</div>`).join('');
+            document.getElementById('speciesContent').innerHTML = Object.entries(species).sort((a, b) => a[0].localeCompare(b[0])).map(([n, c]) => `<div class="summary-item" data-value="${encodeURIComponent(n)}">${esc(n)}</div><div style="padding:12px 0;">${c}</div>`).join('');
             let sl = Object.entries(locs); sl.sort((a, b) => locSortMode === 'rank' ? b[1] - a[1] : a[0].localeCompare(b[0]));
-            document.getElementById('locationContent').innerHTML = sl.map(([n, c]) => `<div class="summary-item" data-value="${encodeURIComponent(n)}">${locObs[n] ? '🔒 ' : ''}${n}</div><div style="padding:12px 0;">${c}</div>`).join('');
+            document.getElementById('locationContent').innerHTML = sl.map(([n, c]) => `<div class="summary-item" data-value="${encodeURIComponent(n)}">${locObs[n] ? '🔒 ' : ''}${esc(n)}</div><div style="padding:12px 0;">${c}</div>`).join('');
         }
 
         function renderCards(list) {
@@ -1161,20 +1175,20 @@
                 const obscuredTag = (o.is_obscured || o.is_private) ? `<span class="card-tag tag-obscured">OBSCURED</span>` : '';
                 const locPrefix = (o.is_obscured || o.is_private) ? '🔒 ' : '';
                 const photoPill = o.sheet_link
-                    ? `<a href="${o.sheet_link}" target="_blank" class="pill-btn photo-pill" title="View photo on Google Photos">📷 AMY</a>`
+                    ? `<a href="${safeUrl(o.sheet_link)}" target="_blank" class="pill-btn photo-pill" title="View photo on Google Photos">📷 AMY</a>`
                     : '';
                 return `
         <div class="nature-card" style="${o.is_wanted ? 'border-left:8px solid var(--wanted-purple);' : ''}">
-            <div class="img-container">${o.photo ? `<img src="${o.photo}" data-medium="${o.photo.replace('small', 'medium')}" class="nature-img" alt="${o.common_name}">` : '🔭'}</div>
+            <div class="img-container">${o.photo ? `<img src="${safeUrl(o.photo)}" data-medium="${esc(o.photo.replace('small', 'medium'))}" class="nature-img" alt="${esc(o.common_name)}">` : '🔭'}</div>
             <div class="card-body">
-                <div><span class="com-name" data-value="${encodeURIComponent(o.common_name)}">${o.common_name}</span>${wantedTag}${notableTag}${obscuredTag}</div>
-                <span class="sci-name">${o.sci_name}</span>
-                <span class="obs-date">🕒 ${o.date}</span>
-                <div class="loc-line" data-value="${encodeURIComponent(o.location_str)}">📍 ${locPrefix}${o.location_str}</div>
+                <div><span class="com-name" data-value="${encodeURIComponent(o.common_name)}">${esc(o.common_name)}</span>${wantedTag}${notableTag}${obscuredTag}</div>
+                <span class="sci-name">${esc(o.sci_name)}</span>
+                <span class="obs-date">🕒 ${esc(o.date)}</span>
+                <div class="loc-line" data-value="${encodeURIComponent(o.location_str)}">📍 ${locPrefix}${esc(o.location_str)}</div>
                 <div class="pill-actions">
-                    <a href="${o.uri}" target="_blank" class="pill-btn">${o.source}</a>
+                    <a href="${safeUrl(o.uri)}" target="_blank" class="pill-btn">${esc(o.source)}</a>
                     <a href="https://www.google.com/maps?q=${o.lat},${o.lng}" target="_blank" class="pill-btn">G-MAP</a>
-                    <button class="pill-btn btn-locate" data-id="${o.id}">LOCATE</button>
+                    <button class="pill-btn btn-locate" data-id="${esc(o.id)}">LOCATE</button>
                     ${photoPill}
                 </div>
             </div>
@@ -1241,7 +1255,7 @@
 
             let html = '';
             sortedGroups.forEach(([groupName, birds]) => {
-                html += `<div class="ll-group-header">${groupName} <span style="font-weight:400;opacity:0.6;">(${birds.length})</span></div>`;
+                html += `<div class="ll-group-header">${esc(groupName)} <span style="font-weight:400;opacity:0.6;">(${birds.length})</span></div>`;
                 birds.forEach(r => {
                     const seen = isSeen(r);
                     const species = r.Species || r.species || '';
@@ -1254,13 +1268,13 @@
             <div class="ll-row">
                 <div class="ll-seen-dot ${seen ? 'seen' : 'unseen'}" title="${seen ? 'Seen' : 'Not yet seen'}"></div>
                 <div style="flex:1;min-width:0;">
-                    <div class="ll-species">${species}</div>
-                    <div class="ll-latin">${latin2}</div>
+                    <div class="ll-species">${esc(species)}</div>
+                    <div class="ll-latin">${esc(latin2)}</div>
                 </div>
-                <div class="ll-code">${code}</div>
-                ${ebirdUrl ? `<a href="${ebirdUrl}" target="_blank" class="ll-photo-btn" style="background:#1a6c35;" title="View on eBird">🐦</a>` : `<div class="ll-photo-placeholder"></div>`}
+                <div class="ll-code">${esc(code)}</div>
+                ${ebirdUrl ? `<a href="${safeUrl(ebirdUrl)}" target="_blank" class="ll-photo-btn" style="background:#1a6c35;" title="View on eBird">🐦</a>` : `<div class="ll-photo-placeholder"></div>`}
                 ${photoLink
-                            ? `<a href="${photoLink}" target="_blank" class="ll-photo-btn" title="View photo">📷</a>`
+                            ? `<a href="${safeUrl(photoLink)}" target="_blank" class="ll-photo-btn" title="View photo">📷</a>`
                             : `<div class="ll-photo-placeholder"></div>`}
             </div>`;
                 });
@@ -1306,7 +1320,7 @@
             const list = getCurrentFilteredList().filter(o => o.photo);
             if (list.length === 0) { alert('No photos in current view.'); return; }
             galleryActive = true;
-            document.getElementById('galleryGrid').innerHTML = list.map(o => `<div class="gallery-cell" data-id="${o.id}" title="${o.common_name}"><img src="${o.photo}" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;display:block;"><div style="padding:4px 6px;font-size:10px;font-weight:800;color:var(--text-main);background:var(--card-bg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${o.common_name}</div></div>`).join('');
+            document.getElementById('galleryGrid').innerHTML = list.map(o => `<div class="gallery-cell" data-id="${esc(o.id)}" title="${esc(o.common_name)}"><img src="${safeUrl(o.photo)}" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;display:block;"><div style="padding:4px 6px;font-size:10px;font-weight:800;color:var(--text-main);background:var(--card-bg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(o.common_name)}</div></div>`).join('');
             const modal = document.getElementById('galleryModal'); modal.style.display = 'block';
             requestAnimationFrame(() => { modal.scrollTop = restoreScroll; });
         }
@@ -1427,7 +1441,7 @@
             const hint = document.getElementById('scanHint');
             if (hint) { hint.style.display = 'none'; localStorage.setItem('nam_scanned', '1'); }
             const locName = (userCoords?.name || 'GPS').toUpperCase();
-            document.getElementById('status').innerHTML = `<div style="display:flex;align-items:center;justify-content:center;gap:12px;width:100%;"><span style="color:var(--btn-leaf);font-size:14px;">✅</span><span style="letter-spacing:1px;color:var(--text-main);font-size:12px;">${locName}</span><span style="color:var(--border);font-weight:100;">|</span><span style="color:var(--accent);font-size:12px;">${filteredList.length} <span style="font-size:9px;opacity:0.6;">OF</span> ${rawData.length} OBS</span></div>`;
+            document.getElementById('status').innerHTML = `<div style="display:flex;align-items:center;justify-content:center;gap:12px;width:100%;"><span style="color:var(--btn-leaf);font-size:14px;">✅</span><span style="letter-spacing:1px;color:var(--text-main);font-size:12px;">${esc(locName)}</span><span style="color:var(--border);font-weight:100;">|</span><span style="color:var(--accent);font-size:12px;">${filteredList.length} <span style="font-size:9px;opacity:0.6;">OF</span> ${rawData.length} OBS</span></div>`;
         }
 
 
@@ -1606,9 +1620,9 @@
 
                     const html = '<div style="font-size:13px;line-height:1.5;color:var(--text-main);">'
                         + '<div style="color:var(--accent);font-size:10px;text-transform:uppercase;font-weight:900;letter-spacing:0.5px;border-bottom:1px solid var(--border);padding-bottom:5px;margin-bottom:8px;">Property Details</div>'
-                        + '<div style="font-weight:900;font-size:14px;margin-bottom:4px;">' + (f.getAttribute('OWNER_NAME') || '—') + '</div>'
-                        + '<div style="color:var(--text-dim);font-size:12px;margin-bottom:4px;">' + (f.getAttribute('SITUS_ADDR') || '—') + '</div>'
-                        + '<div style="font-size:11px;color:var(--accent);">' + (area ? area + ' ' + areaUnit : '') + (area && f.getAttribute('COUNTY') ? ' &nbsp;·&nbsp; ' : '') + (f.getAttribute('COUNTY') || '') + ' County</div>'
+                        + '<div style="font-weight:900;font-size:14px;margin-bottom:4px;">' + esc(f.getAttribute('OWNER_NAME') || '—') + '</div>'
+                        + '<div style="color:var(--text-dim);font-size:12px;margin-bottom:4px;">' + esc(f.getAttribute('SITUS_ADDR') || '—') + '</div>'
+                        + '<div style="font-size:11px;color:var(--accent);">' + (area ? esc(area) + ' ' + esc(areaUnit) : '') + (area && f.getAttribute('COUNTY') ? ' &nbsp;·&nbsp; ' : '') + esc(f.getAttribute('COUNTY') || '') + ' County</div>'
                         + '</div>';
                     loadingPopup.setContent(html);
                 } else {
