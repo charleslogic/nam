@@ -10,13 +10,14 @@
     <script>const NAM_VERSION = 'v2.3.6';</script>
 
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="apple-touch-icon" href="NAM.png">
-    <link rel="icon" type="image/png" href="NAM.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="apple-touch-icon" sizes="180x180" href="nam-icon.svg">
+    <link rel="icon" type="image/svg+xml" href="nam-icon.svg">
     <meta name="theme-color" content="#4ade80">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NAM!">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
 
@@ -45,6 +46,7 @@
                 theme_color: '#4ade80',
                 lang: 'en-US',
                 icons: [
+                    { src: base + '/nam-icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
                     { src: base + '/NAM.png', sizes: '180x180', type: 'image/png', purpose: 'any' },
                     { src: base + '/NAM-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
                     { src: base + '/NAM-192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
