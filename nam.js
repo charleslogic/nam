@@ -2059,7 +2059,7 @@
                 const data = await r.json();
                 if (data.value && Array.isArray(data.value) && data.value.length) {
                     const valid = data.value.filter(id => AI_MODELS.some(m => m.id === id));
-                    const missing = AI_DEFAULT_RANK.filter(id => !valid.includes(id));
+                    const missing = AI_MODELS.map(m => m.id).filter(id => !valid.includes(id));
                     aiRank = [...valid, ...missing];
                 }
             } catch { /* use default */ }

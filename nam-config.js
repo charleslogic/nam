@@ -29,4 +29,11 @@ const AI_MODELS = [
     { id: 'nvidia/nemotron-3-super-120b-a12b:free',  name: 'Nemotron 120B',    via: 'openrouter'  },
     { id: 'gpt-oss-120b',                            name: 'Cerebras 120B',    via: 'cerebras'    },
 ];
-const AI_DEFAULT_RANK = ['gemini-2.5-flash', 'llama-3.3-70b-versatile', 'meta-llama/llama-3.3-70b-instruct:free'];
+const AI_DEFAULT_RANK = [
+    'gemini-2.5-flash',
+    'llama-3.3-70b-versatile',
+    'gpt-oss-120b',
+    'openai/gpt-oss-120b:free',
+    'nvidia/nemotron-3-super-120b-a12b:free',
+    'meta-llama/llama-3.3-70b-instruct:free',
+];
