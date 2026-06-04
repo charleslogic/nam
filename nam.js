@@ -456,7 +456,7 @@
             document.getElementById('btnCancelLoc').addEventListener('click', closeLocModal);
             document.getElementById('btnSubmitLoc').addEventListener('click', submitLocModal);
             document.getElementById('userFavSection').addEventListener('click', e => {
-                if (e.target.closest('.fav-del')) { deleteFav(parseInt(e.target.closest('.quick-chip').dataset.favIdx)); return; }
+                if (e.target.closest('.fav-del')) { deleteFav(e.target.closest('.quick-chip').dataset.favId); return; }
                 const chip = e.target.closest('.quick-chip'); if (!chip) return;
                 document.getElementById('locInput').value = chip.dataset.loc; submitLocModal();
             });
@@ -487,7 +487,7 @@
                 btn.textContent = added ? '✓ SAVED!' : '✓ ALREADY SAVED';
                 setTimeout(() => { btn.textContent = '★ SAVE AS FAVORITE'; }, 1500);
             });
-            renderFavChips();
+            fetchFavs();
             // zoomOverlay click removed — X button (zoomCloseBtn) handles close
 
             // Life List bar (replaces dock button)
@@ -547,34 +547,61 @@
             const b = 0.05; document.getElementById('linkTrails').href = `https://www.alltrails.com/explore?b_tl_lat=${(lat + b).toFixed(2)}&b_tl_lng=${(lng - b).toFixed(2)}&b_br_lat=${(lat - b).toFixed(2)}&b_br_lng=${(lng + b).toFixed(2)}`;
         }
         function toggleTheme() { const t = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light'; document.documentElement.setAttribute('data-theme', t); localStorage.setItem('nam_theme', t); }
-        function loadFavs() { try { return JSON.parse(localStorage.getItem('nam_favorites') || '[]'); } catch { return []; } }
+        let _favs = [];
         function renderFavChips() {
             const el = document.getElementById('userFavChips'); if (!el) return;
-            const favs = loadFavs();
             const sec = document.getElementById('userFavSection');
-            if (!favs.length) { el.innerHTML = ''; if (sec) sec.style.display = 'none'; return; }
+            if (!_favs.length) { el.innerHTML = ''; if (sec) sec.style.display = 'none'; return; }
             if (sec) sec.style.display = '';
-            el.innerHTML = favs.map((f, i) =>
-                `<div class="quick-chip user-fav" data-loc="${f.loc.replace(/"/g,'&quot;')}" data-fav-idx="${i}">⭐ ${f.label.toUpperCase().slice(0,20)}<span class="fav-del">✕</span></div>`
+            el.innerHTML = _favs.map(f =>
+                `<div class="quick-chip user-fav" data-loc="${f.loc.replace(/"/g,'&quot;')}" data-fav-id="${f.id}">⭐ ${f.label.toUpperCase().slice(0,20)}<span class="fav-del">✕</span></div>`
             ).join('');
         }
-        function addFav(text) {
-            if (!text) return false;
-            const favs = loadFavs();
-            if (favs.some(f => f.loc.toLowerCase() === text.toLowerCase())) return false;
-            favs.unshift({ label: text, loc: text });
-            localStorage.setItem('nam_favorites', JSON.stringify(favs));
-            renderFavChips(); return true;
+        async function fetchFavs() {
+            try {
+                const r = await fetch('/api/favorites');
+                if (!r.ok) return;
+                _favs = await r.json();
+                renderFavChips();
+                // One-time migration from localStorage
+                const stored = localStorage.getItem('nam_favorites');
+                if (stored) {
+                    try {
+                        const local = JSON.parse(stored);
+                        for (const f of (Array.isArray(local) ? local : [])) {
+                            const text = f.loc || f.label;
+                            if (text && !_favs.some(s => s.loc.toLowerCase() === text.toLowerCase())) await addFav(text);
+                        }
+                    } catch {}
+                    localStorage.removeItem('nam_favorites');
+                }
+            } catch {}
         }
-        function deleteFav(idx) {
-            const favs = loadFavs();
-            if (idx < 0 || idx >= favs.length) return;
-            favs.splice(idx, 1);
-            localStorage.setItem('nam_favorites', JSON.stringify(favs));
-            renderFavChips();
+        async function addFav(text) {
+            if (!text) return false;
+            if (_favs.some(f => f.loc.toLowerCase() === text.toLowerCase())) return false;
+            try {
+                const r = await fetch('/api/favorites', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ label: text, loc: text }),
+                });
+                if (!r.ok) return false;
+                const [row] = await r.json();
+                _favs.unshift(row);
+                renderFavChips(); return true;
+            } catch { return false; }
+        }
+        async function deleteFav(id) {
+            try {
+                await fetch(`/api/favorites?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+                _favs = _favs.filter(f => f.id !== id);
+                renderFavChips();
+            } catch {}
         }
         function promptLocation() {
-            renderFavChips();
+            renderFavChips();   // show cached state immediately
+            fetchFavs();        // refresh in background (picks up changes from other devices)
             const inp = document.getElementById('locInput');
             const btn = document.getElementById('btnSaveFav');
             btn.style.display = inp.value.trim() ? '' : 'none';
