@@ -1,10 +1,11 @@
 # NAM! — Security & Code Review
 
-Reviewed 2026-05-29 (Opus wrote + implemented). Public, no-auth nature-observation app:
-static frontend + one serverless proxy (`api/ebird-proxy.js`). Aggregates iNaturalist +
-eBird data onto a Leaflet map. No login, no cookies, no database — so the threat model is
-**rendering third-party user-generated content** and **client-side secrets**, not data
-isolation.
+Reviewed 2026-05-29 (Opus wrote + implemented). Updated 2026-06-04.
+No-auth nature-observation app: static frontend + two serverless functions (`api/ebird-proxy.js`,
+`api/favorites.js`). Aggregates iNaturalist + eBird data onto a Leaflet map. No login, no
+cookies. Supabase used only for shared favorites (service-role key, no RLS needed — shared
+table, no per-user isolation). Threat model is **rendering third-party user-generated content**
+and **client-side secrets**, not data isolation.
 
 Code fixes shipped in commit `<fill>`.
 
@@ -72,7 +73,7 @@ page, abuse the Mapbox token, phish). Remotely triggerable, bounded impact.
 
 | # | Issue | Status |
 |---|-------|--------|
-| 1 | RLS off | ✅ N/A — no database/auth |
+| 1 | RLS off | ✅ N/A — `nam_favorites` is intentionally shared (no per-user rows); service role key used server-side only |
 | 2 | Unpinned / SRI-less CDN | ❌ → **fixed** (2.2) |
 | 3 | Empty `vercel.json` | ❌ → **fixed** (2.3) |
 | 4 | Missing `.gitignore` | ❌ → **fixed** (2.4) |
