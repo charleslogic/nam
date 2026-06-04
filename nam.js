@@ -1906,10 +1906,10 @@
             _aiCall(model, messages).then(reply => {
                 bubble.className = 'ai-msg-assistant';
                 bubble.innerHTML = '';
-                const t = document.createElement('div'); t.innerHTML = _aiMarkdown(reply);
                 const a = document.createElement('div'); a.className = 'ai-attribution'; a.textContent = model.name;
-                bubble.appendChild(t);
+                const t = document.createElement('div'); t.innerHTML = _aiMarkdown(reply);
                 bubble.appendChild(a);
+                bubble.appendChild(t);
                 if (remaining.length) _aiAppendMoreBtns(bubble, historySnapshot, remaining);
                 _aiScrollBottom();
             }).catch(err => {
@@ -2011,10 +2011,10 @@
                 aiHistory.push({ role: 'assistant', content: reply });
                 bubble.className = 'ai-msg-assistant';
                 bubble.innerHTML = '';
-                const t = document.createElement('div'); t.innerHTML = _aiMarkdown(reply);
                 const a = document.createElement('div'); a.className = 'ai-attribution'; a.textContent = primaryModel.name;
-                bubble.appendChild(t);
+                const t = document.createElement('div'); t.innerHTML = _aiMarkdown(reply);
                 bubble.appendChild(a);
+                bubble.appendChild(t);
                 if (remainingRank.length) _aiAppendMoreBtns(bubble, historySnapshot, remainingRank);
                 _aiScrollBottom();
             }).catch(err => {
@@ -2043,9 +2043,9 @@
                                 aiHistory.push({ role: 'assistant', content: r2 });
                                 bubble.className = 'ai-msg-assistant';
                                 bubble.innerHTML = '';
-                                const t2 = document.createElement('div'); t2.innerHTML = _aiMarkdown(r2);
                                 const a2 = document.createElement('div'); a2.className = 'ai-attribution'; a2.textContent = next.name;
-                                bubble.appendChild(t2); bubble.appendChild(a2);
+                                const t2 = document.createElement('div'); t2.innerHTML = _aiMarkdown(r2);
+                                bubble.appendChild(a2); bubble.appendChild(t2);
                                 if (remainingRank.length > 1) _aiAppendMoreBtns(bubble, historySnapshot, remainingRank.slice(1));
                                 _aiScrollBottom();
                             }).catch(e2 => {
