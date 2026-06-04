@@ -455,6 +455,11 @@
             document.getElementById('actionCircle').addEventListener('click', handleActionClick);
             document.getElementById('btnCancelLoc').addEventListener('click', closeLocModal);
             document.getElementById('btnSubmitLoc').addEventListener('click', submitLocModal);
+            document.getElementById('userFavSection').addEventListener('click', e => {
+                if (e.target.closest('.fav-del')) { deleteFav(parseInt(e.target.closest('.quick-chip').dataset.favIdx)); return; }
+                const chip = e.target.closest('.quick-chip'); if (!chip) return;
+                document.getElementById('locInput').value = chip.dataset.loc; submitLocModal();
+            });
             document.getElementById('quickChips').addEventListener('click', e => {
                 if (e.target.closest('.fav-del')) { deleteFav(parseInt(e.target.closest('.quick-chip').dataset.favIdx)); return; }
                 const chip = e.target.closest('.quick-chip'); if (!chip) return;
