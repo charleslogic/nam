@@ -1514,6 +1514,12 @@
             right: 0;
         }
 
+        #aiDrawer.fullscreen {
+            width: 100%;
+            left: 0;
+            right: 0;
+        }
+
         .ai-drawer-header {
             display: flex;
             align-items: center;
@@ -1781,3 +1787,49 @@
             opacity: 0.2;
             cursor: not-allowed;
         }
+
+        /* ══ AI SCAN SUMMARY ══ */
+        .ai-scan-summary {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 14px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px 16px;
+        }
+
+        .ai-summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .ai-summary-label {
+            color: var(--text-dim);
+            font-weight: 600;
+        }
+
+        .ai-summary-val {
+            font-weight: 900;
+            color: var(--accent);
+        }
+
+        .ai-summary-val.targets {
+            color: var(--wanted-purple);
+        }
+
+        .ai-summary-val.notable {
+            color: var(--notable-red);
+        }
+
+        /* ══ MARKDOWN PROSE in assistant bubbles ══ */
+        .ai-msg-assistant p { margin: 0 0 6px 0; }
+        .ai-msg-assistant p:last-child { margin-bottom: 0; }
+        .ai-msg-assistant strong { font-weight: 900; color: var(--text-main); }
+        .ai-msg-assistant em { font-style: italic; color: var(--text-dim); }
+        .ai-msg-assistant ul, .ai-msg-assistant ol { margin: 4px 0 6px 0; padding-left: 18px; }
+        .ai-msg-assistant li { margin-bottom: 3px; }
+        .ai-msg-assistant code { background: var(--bg-dark); border-radius: 4px; padding: 1px 5px; font-size: 11px; font-family: monospace; }
+        .ai-msg-assistant h1, .ai-msg-assistant h2, .ai-msg-assistant h3 { font-size: 13px; font-weight: 900; margin: 8px 0 4px 0; color: var(--accent); }

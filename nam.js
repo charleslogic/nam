@@ -1867,7 +1867,7 @@
             _aiCall(model, messages).then(reply => {
                 bubble.className = 'ai-msg-assistant';
                 bubble.innerHTML = '';
-                const t = document.createElement('div'); t.textContent = reply;
+                const t = document.createElement('div'); t.innerHTML = _aiMarkdown(reply);
                 const a = document.createElement('div'); a.className = 'ai-attribution'; a.textContent = model.name;
                 bubble.appendChild(t);
                 bubble.appendChild(a);
@@ -1974,7 +1974,7 @@
                 aiHistory.push({ role: 'assistant', content: reply });
                 bubble.className = 'ai-msg-assistant';
                 bubble.innerHTML = '';
-                const t = document.createElement('div'); t.textContent = reply;
+                const t = document.createElement('div'); t.innerHTML = _aiMarkdown(reply);
                 const a = document.createElement('div'); a.className = 'ai-attribution'; a.textContent = primaryModel.name;
                 bubble.appendChild(t);
                 bubble.appendChild(a);
@@ -2006,7 +2006,7 @@
                                 aiHistory.push({ role: 'assistant', content: r2 });
                                 bubble.className = 'ai-msg-assistant';
                                 bubble.innerHTML = '';
-                                const t2 = document.createElement('div'); t2.textContent = r2;
+                                const t2 = document.createElement('div'); t2.innerHTML = _aiMarkdown(r2);
                                 const a2 = document.createElement('div'); a2.className = 'ai-attribution'; a2.textContent = next.name;
                                 bubble.appendChild(t2); bubble.appendChild(a2);
                                 if (remainingRank.length > 1) _aiAppendMoreBtns(bubble, retryMsgs, remainingRank.slice(1));
@@ -2026,16 +2026,27 @@
             }).finally(() => { sendBtn.disabled = false; });
         }
 
+        function _aiMarkdown(text) {
+            if (typeof marked !== 'undefined') return marked.parse(text);
+            return esc(text).replace(/\n/g, '<br>');
+        }
+
         function updateAiBubble() {
             const hasTargets = rawData.some(o => o.is_wanted);
             document.getElementById('aiBubble').classList.toggle('has-context', hasTargets);
             const noScan = document.getElementById('aiNoScan');
-            if (noScan && rawData.length > 0) {
-                const targetCount = rawData.filter(o => o.is_wanted).length;
-                noScan.textContent = targetCount
-                    ? `${rawData.length} observations loaded — ${targetCount} 🎯 targets. Ask me anything!`
-                    : `${rawData.length} observations loaded. Ask me anything about your scan.`;
-            }
+            if (!noScan || rawData.length === 0) return;
+            const inatCount    = rawData.filter(o => o.source === 'iNat').length;
+            const ebirdCount   = rawData.filter(o => o.source === 'eBird').length;
+            const notableCount = rawData.filter(o => o.is_notable).length;
+            const targetCount  = rawData.filter(o => o.is_wanted).length;
+            noScan.className = '';
+            noScan.innerHTML = `<div class="ai-scan-summary">
+                <div class="ai-summary-row"><span class="ai-summary-label">🌿 iNat</span><span class="ai-summary-val">${inatCount}</span></div>
+                <div class="ai-summary-row"><span class="ai-summary-label">🐦 eBird</span><span class="ai-summary-val">${ebirdCount}</span></div>
+                <div class="ai-summary-row"><span class="ai-summary-label">⭐ Notable</span><span class="ai-summary-val notable">${notableCount}</span></div>
+                <div class="ai-summary-row"><span class="ai-summary-label">🎯 Targets</span><span class="ai-summary-val targets">${targetCount}</span></div>
+            </div>`;
         }
 
         function renderAiRankList() {
@@ -2125,7 +2136,12 @@
                 document.getElementById('aiDrawer').classList.toggle('open');
             });
             document.getElementById('aiDrawerClose').addEventListener('click', () => {
-                document.getElementById('aiDrawer').classList.remove('open');
+                document.getElementById('aiDrawer').classList.remove('open', 'fullscreen');
+            });
+            document.getElementById('aiDrawerFull').addEventListener('click', () => {
+                const drawer = document.getElementById('aiDrawer');
+                const isFullscreen = drawer.classList.toggle('fullscreen');
+                document.getElementById('aiDrawerFull').textContent = isFullscreen ? '⤡' : '⤢';
             });
 
             const sendBtn = document.getElementById('aiSendBtn');

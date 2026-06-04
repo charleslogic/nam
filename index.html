@@ -411,6 +411,7 @@
         <div class="ai-drawer-header">
             <span class="ai-drawer-title">Ask AI</span>
             <span id="aiModelBadge" class="ai-model-badge"></span>
+            <button id="aiDrawerFull" class="ai-drawer-close" title="Toggle full screen">⤢</button>
             <button id="aiDrawerClose" class="ai-drawer-close">✕</button>
         </div>
         <div id="aiMessages" class="ai-messages">
@@ -462,6 +463,7 @@
 
     <script>
         // Inject versioned script tags — NAM_VERSION is the single source of truth
+        document.write('<script src="marked.umd.js?' + NAM_VERSION + '"><\/script>');
         document.write('<script src="nam-config.js?' + NAM_VERSION + '"><\/script>');
         document.write('<script src="nam.js?' + NAM_VERSION + '"><\/script>');
     </script>
