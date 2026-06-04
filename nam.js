@@ -2147,24 +2147,44 @@
             } catch { /* silent */ }
         }
 
-        function _aiFavs() {
-            try { return JSON.parse(localStorage.getItem('nam_ai_favs') || '[]'); } catch { return []; }
+        let aiFavsList = [];
+
+        function _aiFavs() { return aiFavsList; }
+
+        async function _aiFavPersist() {
+            try {
+                await fetch('/api/preferences', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: 'ai_favs', value: aiFavsList }),
+                });
+            } catch { /* silent */ }
         }
+
         function _aiFavSave(q) {
-            const favs = _aiFavs();
-            if (favs.includes(q)) return;
-            favs.unshift(q);
-            localStorage.setItem('nam_ai_favs', JSON.stringify(favs));
+            if (aiFavsList.includes(q)) return;
+            aiFavsList.unshift(q);
             renderFavChips();
+            _aiFavPersist();
         }
+
         function _aiFavDelete(q) {
-            const favs = _aiFavs().filter(f => f !== q);
-            localStorage.setItem('nam_ai_favs', JSON.stringify(favs));
+            aiFavsList = aiFavsList.filter(f => f !== q);
             renderFavChips();
-            // un-star any visible bubble for this question
+            _aiFavPersist();
             document.querySelectorAll('.ai-star-btn').forEach(btn => {
                 if (btn.dataset.q === q) { btn.textContent = '☆'; btn.classList.remove('saved'); }
             });
+        }
+
+        async function loadAiFavs() {
+            try {
+                const r = await fetch('/api/preferences?key=ai_favs');
+                if (!r.ok) return;
+                const data = await r.json();
+                if (data.value && Array.isArray(data.value)) aiFavsList = data.value;
+            } catch { /* use empty */ }
+            renderFavChips();
         }
         function renderFavChips() {
             const el = document.getElementById('aiFavChips');
@@ -2225,7 +2245,7 @@
         function initAi() {
             initAiKeys();
             loadAiRank();
-            renderFavChips();
+            loadAiFavs();
 
             const aiHdr = document.getElementById('aiSettingsHeader');
             const aiContent = document.getElementById('aiSettingsContent');
