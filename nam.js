@@ -1779,10 +1779,10 @@
         }
 
         function _aiKey(via) {
-            if (via === 'gemini')     return localStorage.getItem('infer-key-gemini') || '';
-            if (via === 'groq')       return localStorage.getItem('infer-key-groq') || '';
-            if (via === 'openrouter') return localStorage.getItem('infer-key-or') || '';
-            if (via === 'cerebras')   return localStorage.getItem('infer-key-cerebras') || '';
+            if (via === 'gemini')     return (document.getElementById('aiKeyGemini')?.value   || '').trim();
+            if (via === 'groq')       return (document.getElementById('aiKeyGroq')?.value     || '').trim();
+            if (via === 'openrouter') return (document.getElementById('aiKeyOR')?.value       || '').trim();
+            if (via === 'cerebras')   return (document.getElementById('aiKeyCerebras')?.value || '').trim();
             return '';
         }
 
@@ -2077,8 +2077,14 @@
         }
 
         function initAiKeys() {
-            [['aiKeyGemini', 'infer-key-gemini'], ['aiKeyGroq', 'infer-key-groq'],
-             ['aiKeyOR', 'infer-key-or'], ['aiKeyCerebras', 'infer-key-cerebras']].forEach(([elId, lsKey]) => {
+            const pairs = [
+                ['aiKeyGemini',   'infer-key-gemini'],
+                ['aiKeyGroq',     'infer-key-groq'],
+                ['aiKeyOR',       'infer-key-or'],
+                ['aiKeyCerebras', 'infer-key-cerebras'],
+            ];
+            // Seed inputs from localStorage first
+            pairs.forEach(([elId, lsKey]) => {
                 const el = document.getElementById(elId);
                 if (!el) return;
                 el.value = localStorage.getItem(lsKey) || '';
@@ -2087,6 +2093,13 @@
                     if (v) localStorage.setItem(lsKey, v); else localStorage.removeItem(lsKey);
                 });
             });
+            // Overlay with server env vars (same names as infer — shared keys)
+            fetch('/api/infer-keys').then(r => r.ok ? r.json() : {}).then(k => {
+                if (k.gemini)     { const el = document.getElementById('aiKeyGemini');   if (el) el.value = k.gemini; }
+                if (k.groq)       { const el = document.getElementById('aiKeyGroq');     if (el) el.value = k.groq; }
+                if (k.openrouter) { const el = document.getElementById('aiKeyOR');       if (el) el.value = k.openrouter; }
+                if (k.cerebras)   { const el = document.getElementById('aiKeyCerebras'); if (el) el.value = k.cerebras; }
+            }).catch(() => {});
         }
 
         function initAi() {
