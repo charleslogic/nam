@@ -1752,7 +1752,7 @@
             const ebirdObs = rawData.filter(o => o.source === 'eBird');
 
             if (inatObs.length) {
-                ctx += `iNaturalist (${inatObs.length} observations)\n`;
+                ctx += `iNaturalist – nearby community sightings by other people (${inatObs.length} observations)\n`;
                 inatObs.forEach(o => {
                     const marker = o.is_wanted ? '🎯' : '•';
                     const name = o.common_name || o.sci_name || 'Unknown';
@@ -1765,7 +1765,7 @@
             }
 
             if (ebirdObs.length) {
-                ctx += `eBird (${ebirdObs.length} observations)\n`;
+                ctx += `eBird – nearby community sightings by other people (${ebirdObs.length} observations)\n`;
                 ebirdObs.forEach(o => {
                     const marker = o.is_wanted ? '🎯' : o.is_notable ? '⭐' : '•';
                     const name = o.common_name || o.sci_name || 'Unknown';
@@ -1945,7 +1945,7 @@
             _aiScrollBottom();
 
             const ctx = buildAiContext();
-            const sysContent = `You are a helpful birding assistant. Context key: 🎯 = target species (not yet on life list); ⭐ = eBird notable (rare for the area); • = already seen. Answer concisely based on the context.${ctx ? '\n\nContext:\n' + ctx : ''}`;
+            const sysContent = `You are a helpful birding assistant for the NAM (Nature Around Me) app. The iNaturalist and eBird observations in the context are RECENT COMMUNITY SIGHTINGS by other people near the user's location — NOT the user's own observations. The user's personal data is only the life list and targets. Context key: 🎯 = target species the user wants to see (not yet on their life list) that has been spotted nearby; ⭐ = eBird notable (rare for this area); • = species the user has already seen. Answer concisely based on the context.${ctx ? '\n\nContext:\n' + ctx : ''}`;
 
             aiHistory.push({ role: 'user', content: question });
             const messages = [{ role: 'system', content: sysContent }, ...aiHistory];
