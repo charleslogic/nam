@@ -19,3 +19,14 @@ const OBS_CACHE_KEY  = 'nam_obs_cache';           // localStorage key for observ
 const BASEMAP_CYCLE  = ['streets', 'hybrid', 'usgs']; // Cycle order for basemap button
 const PARCEL_WMS_URL = 'https://feature.geographic.texas.gov/arcgis/services/Parcels/stratmap_land_parcels_48_most_recent/MapServer/WMSServer';
 const PARCEL_MIN_ZOOM = 15; // Minimum zoom level to enable parcel layer
+
+// ── AI Models ─────────────────────────────────────────────────────────────────
+const AI_MODELS = [
+    { id: 'gemini-2.5-flash',                        name: 'Gemini 2.5 Flash', via: 'gemini'      },
+    { id: 'llama-3.3-70b-versatile',                 name: 'Groq Llama 3.3',   via: 'groq'        },
+    { id: 'meta-llama/llama-3.3-70b-instruct:free',  name: 'Llama 3.3 (OR)',   via: 'openrouter'  },
+    { id: 'openai/gpt-oss-120b:free',                name: 'GPT-OSS 120B',     via: 'openrouter'  },
+    { id: 'nvidia/nemotron-3-super-120b-a12b:free',  name: 'Nemotron 120B',    via: 'openrouter'  },
+    { id: 'gpt-oss-120b',                            name: 'Cerebras 120B',    via: 'cerebras'    },
+];
+const AI_DEFAULT_RANK = ['gemini-2.5-flash', 'llama-3.3-70b-versatile', 'meta-llama/llama-3.3-70b-instruct:free'];

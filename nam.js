@@ -321,6 +321,7 @@
 
             attachListeners();
             updateBirdToggles();
+            initAi();
 
             // On startup, probe real connectivity rather than trusting navigator.onLine.
             // Spotty signal returns onLine=true but requests hang — probing first means
@@ -930,6 +931,7 @@
         //  SCAN ORCHESTRATOR
         // ─────────────────────────────────────────────
         async function runScan(pos) {
+            aiHistory = [];
             dlog('Scan started lat=' + pos.coords.latitude.toFixed(4) + ' lng=' + pos.coords.longitude.toFixed(4), 'info');
             // Guard: re-probe connectivity at scan time. triggerScan already checked,
             // but runScan can also be called directly (marker drag, geocode, etc.)
@@ -972,6 +974,7 @@
             };
             rawData = [...(results[1] || []).map(rederive), ...(results[2] || []).map(rederive)]
                 .sort((a, b) => new Date(b.date) - new Date(a.date));
+            updateAiBubble();
 
             // Auto-save to offline cache — always overwrite with latest scan
             try {
@@ -1725,5 +1728,396 @@
             }
         }
 
+        // ─────────────────────────────────────────────
+        //  AI CHAT
+        // ─────────────────────────────────────────────
+        let aiHistory = [];
+        let aiRank = [...AI_DEFAULT_RANK];
+
+        function buildAiContext() {
+            if (!rawData.length) return '';
+            const loc = userCoords;
+            const locStr = loc
+                ? `${loc.name || 'GPS'} (${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)})`
+                : 'unknown';
+
+            let ctx = `YOUR LOCATION: ${locStr}\n`;
+            if (fullLifeList.length) {
+                const seenCount = fullLifeList.filter(isSeen).length;
+                ctx += `LIFE LIST: ${seenCount}/${fullLifeList.length} seen · ${fullWantedList.length} targets remaining\n`;
+            }
+            ctx += '\n';
+
+            const inatObs = rawData.filter(o => o.source === 'iNat');
+            const ebirdObs = rawData.filter(o => o.source === 'eBird');
+
+            if (inatObs.length) {
+                ctx += `iNaturalist (${inatObs.length} observations)\n`;
+                inatObs.forEach(o => {
+                    const marker = o.is_wanted ? '🎯' : '•';
+                    const name = o.common_name || o.sci_name || 'Unknown';
+                    const sci = (o.sci_name && o.sci_name !== name) ? ` (${o.sci_name})` : '';
+                    const place = o.location_str && o.location_str !== 'Private' ? ` — ${o.location_str}` : '';
+                    const date = o.date ? ` — ${o.date}` : '';
+                    ctx += `${marker} ${name}${sci}${date}${place}\n`;
+                });
+                ctx += '\n';
+            }
+
+            if (ebirdObs.length) {
+                ctx += `eBird (${ebirdObs.length} observations)\n`;
+                ebirdObs.forEach(o => {
+                    const marker = o.is_wanted ? '🎯' : o.is_notable ? '⭐' : '•';
+                    const name = o.common_name || o.sci_name || 'Unknown';
+                    const place = o.location_str && o.location_str !== 'Private' ? ` — ${o.location_str}` : '';
+                    const date = o.date ? ` — ${o.date}` : '';
+                    ctx += `${marker} ${name}${date}${place}\n`;
+                });
+            }
+
+            return ctx.trim();
+        }
+
+        function _aiKey(via) {
+            if (via === 'gemini')     return localStorage.getItem('infer-key-gemini') || '';
+            if (via === 'groq')       return localStorage.getItem('infer-key-groq') || '';
+            if (via === 'openrouter') return localStorage.getItem('infer-key-or') || '';
+            if (via === 'cerebras')   return localStorage.getItem('infer-key-cerebras') || '';
+            return '';
+        }
+
+        async function _aiCallGemini(modelId, messages) {
+            const key = _aiKey('gemini');
+            if (!key) throw new Error('No Gemini key — add it in ⚙ AI Settings');
+            const contents = messages.filter(m => m.role !== 'system').map(m => ({
+                role: m.role === 'assistant' ? 'model' : 'user',
+                parts: [{ text: m.content }],
+            }));
+            const sysMsg = messages.find(m => m.role === 'system');
+            const body = { contents, generationConfig: { maxOutputTokens: 2048, temperature: 0.7 } };
+            if (sysMsg) body.systemInstruction = { parts: [{ text: sysMsg.content }] };
+            const res = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${key}`,
+                { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+            );
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error?.message || `Gemini HTTP ${res.status}`);
+            return data.candidates?.[0]?.content?.parts?.[0]?.text || '(no response)';
+        }
+
+        async function _aiCallGroq(modelId, messages) {
+            const key = _aiKey('groq');
+            if (!key) throw new Error('No Groq key — add it in ⚙ AI Settings');
+            const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+                body: JSON.stringify({ model: modelId, messages, max_tokens: 2048, temperature: 0.7 }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error?.message || `Groq HTTP ${res.status}`);
+            return data.choices?.[0]?.message?.content || '(no response)';
+        }
+
+        async function _aiCallCerebras(modelId, messages) {
+            const key = _aiKey('cerebras');
+            if (!key) throw new Error('No Cerebras key — add it in ⚙ AI Settings');
+            const res = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+                body: JSON.stringify({ model: modelId, messages, max_tokens: 2048, temperature: 0.7 }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error?.message || `Cerebras HTTP ${res.status}`);
+            return data.choices?.[0]?.message?.content || '(no response)';
+        }
+
+        async function _aiCallOpenRouter(modelId, messages) {
+            const key = _aiKey('openrouter');
+            if (!key) throw new Error('No OpenRouter key — add it in ⚙ AI Settings');
+            const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + key,
+                    'HTTP-Referer': 'https://charleslogic.com',
+                    'X-Title': 'NAM',
+                },
+                body: JSON.stringify({ model: modelId, messages, max_tokens: 2048, temperature: 0.7 }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error?.message || `OpenRouter HTTP ${res.status}`);
+            return data.choices?.[0]?.message?.content || '(no response)';
+        }
+
+        function _aiCall(model, messages) {
+            if (model.via === 'gemini')     return _aiCallGemini(model.id, messages);
+            if (model.via === 'groq')       return _aiCallGroq(model.id, messages);
+            if (model.via === 'cerebras')   return _aiCallCerebras(model.id, messages);
+            return _aiCallOpenRouter(model.id, messages);
+        }
+
+        function _aiScrollBottom() {
+            const msgs = document.getElementById('aiMessages');
+            if (msgs) msgs.scrollTop = msgs.scrollHeight;
+        }
+
+        // Render an answer bubble for a secondary "see another model" request.
+        // messages = the original [system, ...history_at_ask_time] array, shared across all models for this turn.
+        function _aiRenderAlt(messages, bubble, model, remaining) {
+            _aiCall(model, messages).then(reply => {
+                bubble.className = 'ai-msg-assistant';
+                bubble.innerHTML = '';
+                const t = document.createElement('div'); t.textContent = reply;
+                const a = document.createElement('div'); a.className = 'ai-attribution'; a.textContent = model.name;
+                bubble.appendChild(t);
+                bubble.appendChild(a);
+                if (remaining.length) _aiAppendMoreBtns(bubble, messages, remaining);
+                _aiScrollBottom();
+            }).catch(err => {
+                bubble.className = 'ai-msg-error';
+                bubble.innerHTML = '';
+                const t = document.createElement('div'); t.textContent = err.message;
+                bubble.appendChild(t);
+                if (remaining.length) {
+                    const nextModel = AI_MODELS.find(m => m.id === remaining[0]);
+                    if (nextModel) _aiAppendRetryBtn(bubble, messages, nextModel, remaining.slice(1));
+                }
+                _aiScrollBottom();
+            });
+        }
+
+        function _aiAppendMoreBtns(parentBubble, messages, remaining) {
+            const div = document.createElement('div');
+            div.className = 'ai-more-btns';
+            remaining.forEach((id, i) => {
+                const m = AI_MODELS.find(x => x.id === id);
+                if (!m) return;
+                const btn = document.createElement('button');
+                btn.className = 'ai-more-btn';
+                btn.textContent = `See ${m.name}'s answer`;
+                btn.addEventListener('click', () => {
+                    btn.remove();
+                    const nextBubble = document.createElement('div');
+                    nextBubble.className = 'ai-msg-thinking';
+                    nextBubble.textContent = 'thinking…';
+                    parentBubble.insertAdjacentElement('afterend', nextBubble);
+                    _aiScrollBottom();
+                    _aiRenderAlt(messages, nextBubble, m, remaining.slice(i + 1));
+                });
+                div.appendChild(btn);
+            });
+            parentBubble.appendChild(div);
+        }
+
+        function _aiAppendRetryBtn(bubble, messages, nextModel, afterRemaining) {
+            const div = document.createElement('div'); div.style.marginTop = '6px';
+            const btn = document.createElement('button');
+            btn.className = 'ai-more-btn';
+            btn.style.cssText = 'border-color:var(--notable-red);color:var(--notable-red)';
+            btn.textContent = `Try ${nextModel.name} →`;
+            btn.addEventListener('click', () => {
+                bubble.className = 'ai-msg-thinking';
+                bubble.innerHTML = '';
+                bubble.textContent = 'thinking…';
+                _aiRenderAlt(messages, bubble, nextModel, afterRemaining);
+            });
+            div.appendChild(btn);
+            bubble.appendChild(div);
+        }
+
+        function sendAiQuestion() {
+            const input = document.getElementById('aiInput');
+            const question = input.value.trim();
+            if (!question) return;
+
+            const noScan = document.getElementById('aiNoScan');
+            if (noScan) noScan.remove();
+
+            const msgArea = document.getElementById('aiMessages');
+
+            const userEl = document.createElement('div');
+            userEl.className = 'ai-msg-user';
+            userEl.textContent = question;
+            msgArea.appendChild(userEl);
+
+            input.value = '';
+            input.style.height = 'auto';
+            _aiScrollBottom();
+
+            const ctx = buildAiContext();
+            const sysContent = `You are a helpful birding assistant. Context key: 🎯 = target species (not yet on life list); ⭐ = eBird notable (rare for the area); • = already seen. Answer concisely based on the context.${ctx ? '\n\nContext:\n' + ctx : ''}`;
+
+            aiHistory.push({ role: 'user', content: question });
+            const messages = [{ role: 'system', content: sysContent }, ...aiHistory];
+
+            // Pick primary model: first in rank that has a key, else first in rank
+            const primaryId = aiRank.find(id => {
+                const m = AI_MODELS.find(x => x.id === id);
+                return m && _aiKey(m.via);
+            }) || aiRank[0];
+            const primaryModel = AI_MODELS.find(m => m.id === primaryId) || AI_MODELS[0];
+            const remainingRank = aiRank.filter(id => id !== primaryId);
+
+            const badge = document.getElementById('aiModelBadge');
+            if (badge) badge.textContent = primaryModel.name;
+
+            const bubble = document.createElement('div');
+            bubble.className = 'ai-msg-thinking';
+            bubble.textContent = 'thinking…';
+            msgArea.appendChild(bubble);
+            _aiScrollBottom();
+
+            const sendBtn = document.getElementById('aiSendBtn');
+            sendBtn.disabled = true;
+
+            _aiCall(primaryModel, messages).then(reply => {
+                aiHistory.push({ role: 'assistant', content: reply });
+                bubble.className = 'ai-msg-assistant';
+                bubble.innerHTML = '';
+                const t = document.createElement('div'); t.textContent = reply;
+                const a = document.createElement('div'); a.className = 'ai-attribution'; a.textContent = primaryModel.name;
+                bubble.appendChild(t);
+                bubble.appendChild(a);
+                if (remainingRank.length) _aiAppendMoreBtns(bubble, messages, remainingRank);
+                _aiScrollBottom();
+            }).catch(err => {
+                aiHistory.pop();
+                bubble.className = 'ai-msg-error';
+                bubble.innerHTML = '';
+                const t = document.createElement('div'); t.textContent = err.message;
+                bubble.appendChild(t);
+                if (remainingRank.length) {
+                    const next = AI_MODELS.find(m => m.id === remainingRank[0]);
+                    if (next) {
+                        // retry btn re-adds user msg to history and calls next model
+                        const div = document.createElement('div'); div.style.marginTop = '6px';
+                        const btn = document.createElement('button');
+                        btn.className = 'ai-more-btn';
+                        btn.style.cssText = 'border-color:var(--notable-red);color:var(--notable-red)';
+                        btn.textContent = `Try ${next.name} →`;
+                        btn.addEventListener('click', () => {
+                            aiHistory.push({ role: 'user', content: question });
+                            const retryMsgs = [{ role: 'system', content: sysContent }, ...aiHistory];
+                            bubble.className = 'ai-msg-thinking';
+                            bubble.innerHTML = '';
+                            bubble.textContent = 'thinking…';
+                            if (badge) badge.textContent = next.name;
+                            _aiCall(next, retryMsgs).then(r2 => {
+                                aiHistory.push({ role: 'assistant', content: r2 });
+                                bubble.className = 'ai-msg-assistant';
+                                bubble.innerHTML = '';
+                                const t2 = document.createElement('div'); t2.textContent = r2;
+                                const a2 = document.createElement('div'); a2.className = 'ai-attribution'; a2.textContent = next.name;
+                                bubble.appendChild(t2); bubble.appendChild(a2);
+                                if (remainingRank.length > 1) _aiAppendMoreBtns(bubble, retryMsgs, remainingRank.slice(1));
+                                _aiScrollBottom();
+                            }).catch(e2 => {
+                                aiHistory.pop();
+                                bubble.className = 'ai-msg-error';
+                                bubble.textContent = e2.message;
+                                _aiScrollBottom();
+                            });
+                        });
+                        div.appendChild(btn);
+                        bubble.appendChild(div);
+                    }
+                }
+                _aiScrollBottom();
+            }).finally(() => { sendBtn.disabled = false; });
+        }
+
+        function updateAiBubble() {
+            const hasTargets = rawData.some(o => o.is_wanted);
+            document.getElementById('aiBubble').classList.toggle('has-context', hasTargets);
+        }
+
+        function renderAiRankList() {
+            const list = document.getElementById('aiRankList');
+            if (!list) return;
+            list.innerHTML = '';
+            aiRank.forEach((id, i) => {
+                const model = AI_MODELS.find(m => m.id === id);
+                if (!model) return;
+                const row = document.createElement('div');
+                row.className = 'ai-rank-row';
+                const num = document.createElement('span'); num.className = 'ai-rank-num'; num.textContent = i + 1;
+                const name = document.createElement('span'); name.className = 'ai-rank-name'; name.textContent = model.name;
+                const via = document.createElement('span'); via.className = 'ai-rank-via'; via.textContent = model.via;
+                const upBtn = document.createElement('button'); upBtn.className = 'ai-rank-btn'; upBtn.textContent = '↑'; upBtn.disabled = i === 0;
+                upBtn.addEventListener('click', () => { [aiRank[i-1], aiRank[i]] = [aiRank[i], aiRank[i-1]]; renderAiRankList(); saveAiRank(); });
+                const downBtn = document.createElement('button'); downBtn.className = 'ai-rank-btn'; downBtn.textContent = '↓'; downBtn.disabled = i === aiRank.length - 1;
+                downBtn.addEventListener('click', () => { [aiRank[i], aiRank[i+1]] = [aiRank[i+1], aiRank[i]]; renderAiRankList(); saveAiRank(); });
+                row.appendChild(num); row.appendChild(name); row.appendChild(via); row.appendChild(upBtn); row.appendChild(downBtn);
+                list.appendChild(row);
+            });
+        }
+
+        async function loadAiRank() {
+            try {
+                const r = await fetch('/api/preferences?key=ai_rank');
+                if (!r.ok) return;
+                const data = await r.json();
+                if (data.value && Array.isArray(data.value) && data.value.length) {
+                    const valid = data.value.filter(id => AI_MODELS.some(m => m.id === id));
+                    const missing = AI_DEFAULT_RANK.filter(id => !valid.includes(id));
+                    aiRank = [...valid, ...missing];
+                }
+            } catch { /* use default */ }
+            renderAiRankList();
+        }
+
+        async function saveAiRank() {
+            try {
+                await fetch('/api/preferences', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: 'ai_rank', value: aiRank }),
+                });
+            } catch { /* silent */ }
+        }
+
+        function initAiKeys() {
+            [['aiKeyGemini', 'infer-key-gemini'], ['aiKeyGroq', 'infer-key-groq'],
+             ['aiKeyOR', 'infer-key-or'], ['aiKeyCerebras', 'infer-key-cerebras']].forEach(([elId, lsKey]) => {
+                const el = document.getElementById(elId);
+                if (!el) return;
+                el.value = localStorage.getItem(lsKey) || '';
+                el.addEventListener('change', () => {
+                    const v = el.value.trim();
+                    if (v) localStorage.setItem(lsKey, v); else localStorage.removeItem(lsKey);
+                });
+            });
+        }
+
+        function initAi() {
+            initAiKeys();
+            loadAiRank();
+
+            const aiHdr = document.getElementById('aiSettingsHeader');
+            const aiContent = document.getElementById('aiSettingsContent');
+            const aiChev = document.getElementById('aiSettingsChevron');
+            if (aiHdr) aiHdr.addEventListener('click', () => {
+                aiContent.classList.toggle('open');
+                aiChev.classList.toggle('rotated');
+            });
+
+            document.getElementById('aiBubble').addEventListener('click', () => {
+                document.getElementById('aiDrawer').classList.toggle('open');
+            });
+            document.getElementById('aiDrawerClose').addEventListener('click', () => {
+                document.getElementById('aiDrawer').classList.remove('open');
+            });
+
+            const sendBtn = document.getElementById('aiSendBtn');
+            const aiInput = document.getElementById('aiInput');
+            sendBtn.addEventListener('click', sendAiQuestion);
+            aiInput.addEventListener('keydown', e => {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAiQuestion(); }
+            });
+            aiInput.addEventListener('input', () => {
+                aiInput.style.height = 'auto';
+                aiInput.style.height = Math.min(aiInput.scrollHeight, 100) + 'px';
+            });
+        }
+
         initApp();
-    

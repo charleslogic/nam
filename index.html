@@ -300,6 +300,35 @@
                     </div>
                 </div>
 
+                <div class="info-card-container" id="aiSettingsCard" style="margin-bottom:12px;">
+                    <div class="info-card-header" id="aiSettingsHeader">
+                        <span class="config-label" style="margin:0;">🤖 AI Settings</span>
+                        <span id="aiSettingsChevron" class="chevron" style="font-size:12px;">▼</span>
+                    </div>
+                    <div id="aiSettingsContent" class="info-card-content">
+                        <div class="config-label" style="margin-top:8px;">API Keys</div>
+                        <div class="ai-key-row">
+                            <label class="ai-key-label">Gemini</label>
+                            <input type="password" id="aiKeyGemini" class="ai-key-input" placeholder="AIza…" autocomplete="off">
+                        </div>
+                        <div class="ai-key-row">
+                            <label class="ai-key-label">Groq</label>
+                            <input type="password" id="aiKeyGroq" class="ai-key-input" placeholder="gsk_…" autocomplete="off">
+                        </div>
+                        <div class="ai-key-row">
+                            <label class="ai-key-label">OpenRouter</label>
+                            <input type="password" id="aiKeyOR" class="ai-key-input" placeholder="sk-or-…" autocomplete="off">
+                        </div>
+                        <div class="ai-key-row">
+                            <label class="ai-key-label">Cerebras</label>
+                            <input type="password" id="aiKeyCerebras" class="ai-key-input" placeholder="csk-…" autocomplete="off">
+                        </div>
+                        <div class="config-label" style="margin-top:14px;">Model Order</div>
+                        <div style="font-size:11px; color:var(--text-dim); margin-bottom:8px;">Top model is used first. Tap See [Model]'s answer for alternatives.</div>
+                        <div id="aiRankList" class="ai-rank-list"></div>
+                    </div>
+                </div>
+
                 <div class="radius-container">
                     <div class="config-label">Map Style & Overlays</div>
                     <select id="mapType" class="map-select">
@@ -375,6 +404,23 @@
         <button id="btnJumpList" class="dock-btn">📋 LIST</button>
     </div>
     <button id="actionCircle">↑</button>
+    <button id="aiBubble" title="Ask AI about this scan">💬</button>
+
+    <!-- AI Chat Drawer -->
+    <div id="aiDrawer">
+        <div class="ai-drawer-header">
+            <span class="ai-drawer-title">Ask AI</span>
+            <span id="aiModelBadge" class="ai-model-badge"></span>
+            <button id="aiDrawerClose" class="ai-drawer-close">✕</button>
+        </div>
+        <div id="aiMessages" class="ai-messages">
+            <div id="aiNoScan" class="ai-no-scan">Run a scan first to load bird context.</div>
+        </div>
+        <div class="ai-input-row">
+            <textarea id="aiInput" class="ai-input" placeholder="Ask about your scan…" rows="1"></textarea>
+            <button id="aiSendBtn" class="ai-send-btn">Send</button>
+        </div>
+    </div>
 
     <!-- Location Modal -->
     <div id="locModal"
