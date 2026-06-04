@@ -1734,8 +1734,9 @@
         let aiHistory = [];
         let aiRank = [...AI_DEFAULT_RANK];
 
-        function buildAiContext() {
+        function buildAiContext(truncate) {
             if (!rawData.length) return '';
+            const MAX_REGULAR = truncate ? 40 : Infinity; // cap only for models that need it
             const loc = userCoords;
             const locStr = loc
                 ? `${loc.name || 'GPS'} (${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)})`
@@ -1748,32 +1749,33 @@
             }
             ctx += '\n';
 
-            const inatObs = rawData.filter(o => o.source === 'iNat');
-            const ebirdObs = rawData.filter(o => o.source === 'eBird');
-
-            if (inatObs.length) {
-                ctx += `iNaturalist – nearby community sightings by other people (${inatObs.length} observations)\n`;
-                inatObs.forEach(o => {
-                    const marker = o.is_wanted ? '🎯' : '•';
-                    const name = o.common_name || o.sci_name || 'Unknown';
-                    const sci = (o.sci_name && o.sci_name !== name) ? ` (${o.sci_name})` : '';
-                    const place = o.location_str && o.location_str !== 'Private' ? ` — ${o.location_str}` : '';
-                    const date = o.date ? ` — ${o.date}` : '';
-                    ctx += `${marker} ${name}${sci}${date}${place}\n`;
-                });
-                ctx += '\n';
+            function fmtLine(o, fullDetail) {
+                const marker = o.is_wanted ? '🎯' : o.is_notable ? '⭐' : '•';
+                const name = o.common_name || o.sci_name || 'Unknown';
+                const sci = (fullDetail && o.sci_name && o.sci_name !== name) ? ` (${o.sci_name})` : '';
+                const date = o.date ? ` — ${String(o.date).slice(0, 10)}` : '';
+                const place = (o.location_str && o.location_str !== 'Private')
+                    ? ` — ${o.location_str.slice(0, 35)}` : '';
+                return `${marker} ${name}${sci}${date}${place}`;
             }
 
-            if (ebirdObs.length) {
-                ctx += `eBird – nearby community sightings by other people (${ebirdObs.length} observations)\n`;
-                ebirdObs.forEach(o => {
-                    const marker = o.is_wanted ? '🎯' : o.is_notable ? '⭐' : '•';
-                    const name = o.common_name || o.sci_name || 'Unknown';
-                    const place = o.location_str && o.location_str !== 'Private' ? ` — ${o.location_str}` : '';
-                    const date = o.date ? ` — ${o.date}` : '';
-                    ctx += `${marker} ${name}${date}${place}\n`;
-                });
+            function renderSource(obs, label) {
+                if (!obs.length) return '';
+                const priority = obs.filter(o => o.is_wanted || o.is_notable);
+                const regular  = obs.filter(o => !o.is_wanted && !o.is_notable);
+                const shown    = regular.slice(0, MAX_REGULAR);
+                const clipped  = regular.length - shown.length;
+                let out = `${label} (${obs.length} total)\n`;
+                priority.forEach(o => { out += fmtLine(o, true)  + '\n'; });
+                shown.forEach(o =>    { out += fmtLine(o, false) + '\n'; });
+                if (clipped > 0) out += `(+ ${clipped} more common observations omitted)\n`;
+                return out + '\n';
             }
+
+            ctx += renderSource(rawData.filter(o => o.source === 'iNat'),
+                'iNaturalist – nearby community sightings by other people');
+            ctx += renderSource(rawData.filter(o => o.source === 'eBird'),
+                'eBird – nearby community sightings by other people');
 
             return ctx.trim();
         }
@@ -1861,9 +1863,16 @@
             if (msgs) msgs.scrollTop = msgs.scrollHeight;
         }
 
+        function _aiBuildMessages(historySnapshot, model) {
+            const ctx = buildAiContext(model.truncate);
+            const sys = `You are a helpful birding assistant for the NAM (Nature Around Me) app. The iNaturalist and eBird observations in the context are RECENT COMMUNITY SIGHTINGS by other people near the user's location — NOT the user's own observations. The user's personal data is only the life list and targets. Context key: 🎯 = target species the user wants to see (not yet on their life list) that has been spotted nearby; ⭐ = eBird notable (rare for this area); • = species the user has already seen. Answer concisely based on the context.${ctx ? '\n\nContext:\n' + ctx : ''}`;
+            return [{ role: 'system', content: sys }, ...historySnapshot];
+        }
+
         // Render an answer bubble for a secondary "see another model" request.
-        // messages = the original [system, ...history_at_ask_time] array, shared across all models for this turn.
-        function _aiRenderAlt(messages, bubble, model, remaining) {
+        // historySnapshot = aiHistory state at the time the question was asked.
+        function _aiRenderAlt(historySnapshot, bubble, model, remaining) {
+            const messages = _aiBuildMessages(historySnapshot, model);
             _aiCall(model, messages).then(reply => {
                 bubble.className = 'ai-msg-assistant';
                 bubble.innerHTML = '';
@@ -1871,7 +1880,7 @@
                 const a = document.createElement('div'); a.className = 'ai-attribution'; a.textContent = model.name;
                 bubble.appendChild(t);
                 bubble.appendChild(a);
-                if (remaining.length) _aiAppendMoreBtns(bubble, messages, remaining);
+                if (remaining.length) _aiAppendMoreBtns(bubble, historySnapshot, remaining);
                 _aiScrollBottom();
             }).catch(err => {
                 bubble.className = 'ai-msg-error';
@@ -1880,13 +1889,13 @@
                 bubble.appendChild(t);
                 if (remaining.length) {
                     const nextModel = AI_MODELS.find(m => m.id === remaining[0]);
-                    if (nextModel) _aiAppendRetryBtn(bubble, messages, nextModel, remaining.slice(1));
+                    if (nextModel) _aiAppendRetryBtn(bubble, historySnapshot, nextModel, remaining.slice(1));
                 }
                 _aiScrollBottom();
             });
         }
 
-        function _aiAppendMoreBtns(parentBubble, messages, remaining) {
+        function _aiAppendMoreBtns(parentBubble, historySnapshot, remaining) {
             const div = document.createElement('div');
             div.className = 'ai-more-btns';
             remaining.forEach((id, i) => {
@@ -1902,14 +1911,14 @@
                     nextBubble.textContent = 'thinking…';
                     parentBubble.insertAdjacentElement('afterend', nextBubble);
                     _aiScrollBottom();
-                    _aiRenderAlt(messages, nextBubble, m, remaining.slice(i + 1));
+                    _aiRenderAlt(historySnapshot, nextBubble, m, remaining.slice(i + 1));
                 });
                 div.appendChild(btn);
             });
             parentBubble.appendChild(div);
         }
 
-        function _aiAppendRetryBtn(bubble, messages, nextModel, afterRemaining) {
+        function _aiAppendRetryBtn(bubble, historySnapshot, nextModel, afterRemaining) {
             const div = document.createElement('div'); div.style.marginTop = '6px';
             const btn = document.createElement('button');
             btn.className = 'ai-more-btn';
@@ -1919,7 +1928,7 @@
                 bubble.className = 'ai-msg-thinking';
                 bubble.innerHTML = '';
                 bubble.textContent = 'thinking…';
-                _aiRenderAlt(messages, bubble, nextModel, afterRemaining);
+                _aiRenderAlt(historySnapshot, bubble, nextModel, afterRemaining);
             });
             div.appendChild(btn);
             bubble.appendChild(div);
@@ -1944,11 +1953,8 @@
             input.style.height = 'auto';
             _aiScrollBottom();
 
-            const ctx = buildAiContext();
-            const sysContent = `You are a helpful birding assistant for the NAM (Nature Around Me) app. The iNaturalist and eBird observations in the context are RECENT COMMUNITY SIGHTINGS by other people near the user's location — NOT the user's own observations. The user's personal data is only the life list and targets. Context key: 🎯 = target species the user wants to see (not yet on their life list) that has been spotted nearby; ⭐ = eBird notable (rare for this area); • = species the user has already seen. Answer concisely based on the context.${ctx ? '\n\nContext:\n' + ctx : ''}`;
-
             aiHistory.push({ role: 'user', content: question });
-            const messages = [{ role: 'system', content: sysContent }, ...aiHistory];
+            const historySnapshot = [...aiHistory];
 
             // Pick primary model: first in rank that has a key, else first in rank
             const primaryId = aiRank.find(id => {
@@ -1957,6 +1963,7 @@
             }) || aiRank[0];
             const primaryModel = AI_MODELS.find(m => m.id === primaryId) || AI_MODELS[0];
             const remainingRank = aiRank.filter(id => id !== primaryId);
+            const messages = _aiBuildMessages(historySnapshot, primaryModel);
 
             const badge = document.getElementById('aiModelBadge');
             if (badge) badge.textContent = primaryModel.name;
@@ -1978,7 +1985,7 @@
                 const a = document.createElement('div'); a.className = 'ai-attribution'; a.textContent = primaryModel.name;
                 bubble.appendChild(t);
                 bubble.appendChild(a);
-                if (remainingRank.length) _aiAppendMoreBtns(bubble, messages, remainingRank);
+                if (remainingRank.length) _aiAppendMoreBtns(bubble, historySnapshot, remainingRank);
                 _aiScrollBottom();
             }).catch(err => {
                 aiHistory.pop();
@@ -1997,7 +2004,7 @@
                         btn.textContent = `Try ${next.name} →`;
                         btn.addEventListener('click', () => {
                             aiHistory.push({ role: 'user', content: question });
-                            const retryMsgs = [{ role: 'system', content: sysContent }, ...aiHistory];
+                            const retryMsgs = _aiBuildMessages(historySnapshot, next);
                             bubble.className = 'ai-msg-thinking';
                             bubble.innerHTML = '';
                             bubble.textContent = 'thinking…';
@@ -2009,7 +2016,7 @@
                                 const t2 = document.createElement('div'); t2.innerHTML = _aiMarkdown(r2);
                                 const a2 = document.createElement('div'); a2.className = 'ai-attribution'; a2.textContent = next.name;
                                 bubble.appendChild(t2); bubble.appendChild(a2);
-                                if (remainingRank.length > 1) _aiAppendMoreBtns(bubble, retryMsgs, remainingRank.slice(1));
+                                if (remainingRank.length > 1) _aiAppendMoreBtns(bubble, historySnapshot, remainingRank.slice(1));
                                 _aiScrollBottom();
                             }).catch(e2 => {
                                 aiHistory.pop();
