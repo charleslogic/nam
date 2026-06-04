@@ -456,6 +456,7 @@
             document.getElementById('btnCancelLoc').addEventListener('click', closeLocModal);
             document.getElementById('btnSubmitLoc').addEventListener('click', submitLocModal);
             document.getElementById('quickChips').addEventListener('click', e => {
+                if (e.target.closest('.fav-del')) { deleteFav(parseInt(e.target.closest('.quick-chip').dataset.favIdx)); return; }
                 const chip = e.target.closest('.quick-chip'); if (!chip) return;
                 if (chip.dataset.lat && chip.dataset.lng) {
                     // Pinned coords — bypass geocoding entirely (avoids ambiguous city names)
@@ -471,6 +472,17 @@
                 }
             });
             document.getElementById('locInput').addEventListener('keydown', e => { if (e.key === 'Enter') submitLocModal(); });
+            document.getElementById('locInput').addEventListener('input', e => {
+                document.getElementById('btnSaveFav').style.display = e.target.value.trim() ? '' : 'none';
+            });
+            document.getElementById('btnSaveFav').addEventListener('click', () => {
+                const text = document.getElementById('locInput').value.trim(); if (!text) return;
+                const added = addFav(text);
+                const btn = document.getElementById('btnSaveFav');
+                btn.textContent = added ? '✓ SAVED!' : '✓ ALREADY SAVED';
+                setTimeout(() => { btn.textContent = '★ SAVE AS FAVORITE'; }, 1500);
+            });
+            renderFavChips();
             // zoomOverlay click removed — X button (zoomCloseBtn) handles close
 
             // Life List bar (replaces dock button)
@@ -530,7 +542,41 @@
             const b = 0.05; document.getElementById('linkTrails').href = `https://www.alltrails.com/explore?b_tl_lat=${(lat + b).toFixed(2)}&b_tl_lng=${(lng - b).toFixed(2)}&b_br_lat=${(lat - b).toFixed(2)}&b_br_lng=${(lng + b).toFixed(2)}`;
         }
         function toggleTheme() { const t = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light'; document.documentElement.setAttribute('data-theme', t); localStorage.setItem('nam_theme', t); }
-        function promptLocation() { document.getElementById('locModal').style.display = 'block'; document.getElementById('locInput').focus(); }
+        function loadFavs() { try { return JSON.parse(localStorage.getItem('nam_favorites') || '[]'); } catch { return []; } }
+        function renderFavChips() {
+            const el = document.getElementById('userFavChips'); if (!el) return;
+            const favs = loadFavs();
+            const sec = document.getElementById('userFavSection');
+            if (!favs.length) { el.innerHTML = ''; if (sec) sec.style.display = 'none'; return; }
+            if (sec) sec.style.display = '';
+            el.innerHTML = favs.map((f, i) =>
+                `<div class="quick-chip user-fav" data-loc="${f.loc.replace(/"/g,'&quot;')}" data-fav-idx="${i}">⭐ ${f.label.toUpperCase().slice(0,20)}<span class="fav-del">✕</span></div>`
+            ).join('');
+        }
+        function addFav(text) {
+            if (!text) return false;
+            const favs = loadFavs();
+            if (favs.some(f => f.loc.toLowerCase() === text.toLowerCase())) return false;
+            favs.unshift({ label: text, loc: text });
+            localStorage.setItem('nam_favorites', JSON.stringify(favs));
+            renderFavChips(); return true;
+        }
+        function deleteFav(idx) {
+            const favs = loadFavs();
+            if (idx < 0 || idx >= favs.length) return;
+            favs.splice(idx, 1);
+            localStorage.setItem('nam_favorites', JSON.stringify(favs));
+            renderFavChips();
+        }
+        function promptLocation() {
+            renderFavChips();
+            const inp = document.getElementById('locInput');
+            const btn = document.getElementById('btnSaveFav');
+            btn.style.display = inp.value.trim() ? '' : 'none';
+            btn.textContent = '★ SAVE AS FAVORITE';
+            document.getElementById('locModal').style.display = 'block';
+            inp.focus();
+        }
         function closeLocModal() { document.getElementById('locModal').style.display = 'none'; }
         // Calculate appropriate map animation duration based on distance
         // Short hops get smooth animation, long jumps get near-instant snap

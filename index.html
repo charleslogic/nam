@@ -7,7 +7,7 @@
          JS, CSS, and SW caches in one shot.
          Must match APP_VERSION in nam-sw.js.
     ════════════════════════════════════════════════ -->
-    <script>const NAM_VERSION = 'v2.3.9';</script>
+    <script>const NAM_VERSION = 'v2.4.0';</script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -383,7 +383,12 @@
             style="background:var(--card-bg); padding:25px; border-radius:20px; border:2px solid var(--accent); width:90%; max-width:400px; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);">
             <h3 class="config-label">Set Custom Location</h3>
             <input type="text" id="locInput" placeholder="Zip, City, or Park..."
-                style="width:100%; padding:15px; border-radius:12px; border:1px solid var(--accent); background:var(--bg-dark); color:var(--text-main); font-size:18px; margin-bottom:15px;">
+                style="width:100%; padding:15px; border-radius:12px; border:1px solid var(--accent); background:var(--bg-dark); color:var(--text-main); font-size:18px; margin-bottom:8px;">
+            <button id="btnSaveFav" style="display:none; background:none; border:none; color:var(--accent); font-size:10px; font-weight:800; cursor:pointer; letter-spacing:0.5px; width:100%; text-align:right; padding:0 0 14px 0;">★ SAVE AS FAVORITE</button>
+            <div id="userFavSection" style="display:none; margin-bottom:12px;">
+                <div style="font-size:9px; font-weight:800; color:var(--text-dim); letter-spacing:1px; margin-bottom:6px;">SAVED</div>
+                <div id="userFavChips" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+            </div>
             <div id="quickChips" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;">
                 <div class="quick-chip" data-loc="Lake City, CO" data-lat="38.0297" data-lng="-107.3120">⛰️ LAKE CITY</div>
                 <div class="quick-chip" data-loc="Las Vegas, NV">✈️ LAS VEGAS</div>

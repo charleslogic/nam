@@ -891,6 +891,10 @@
             color: var(--accent);
         }
 
+        .user-fav { position: relative; padding-right: 26px; }
+        .fav-del { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 10px; opacity: 0.5; line-height: 1; }
+        .fav-del:hover { opacity: 1; }
+
         .leaflet-div-icon {
             background: transparent;
             border: none;
