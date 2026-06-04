@@ -804,7 +804,13 @@
                         _notableMs = Math.round(performance.now() - _t0notable);
                         if (notableText.trim()) {
                             const notableData = JSON.parse(notableText);
-                            notableIds = new Set(Array.isArray(notableData) ? notableData.map(n => n.subId + '|' + (n.speciesCode || n.sciName || '')) : []);
+                            if (Array.isArray(notableData)) {
+                                notableIds = new Set(notableData.map(n => n.subId + '|' + (n.speciesCode || n.sciName || '')));
+                                // Merge notable-only obs that didn't appear in recent (eBird sometimes excludes rare/provisional birds from the recent endpoint)
+                                const recentKeys = new Set(recentData.map(o => o.subId + '|' + (o.speciesCode || o.sciName || '')));
+                                const notableOnly = notableData.filter(n => !recentKeys.has(n.subId + '|' + (n.speciesCode || n.sciName || '')));
+                                if (notableOnly.length) { recentData = recentData.concat(notableOnly); dlog('eBird notable-only merge: +' + notableOnly.length + ' obs not in recent', 'info'); }
+                            }
                             _notableCount = notableIds.size;
                             dlog('eBird notable: ' + notableIds.size + ' notable sightings in ' + _notableMs + 'ms', 'info');
                         } else { dlog('eBird notable: empty response (no notables)', 'info'); }
