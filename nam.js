@@ -786,10 +786,10 @@
             try {
                 // Sequential fetches — parallel requests to same PHP proxy can cause race conditions
                 const _t0recent = performance.now();
-                const recentRes = await fetch(`/api/ebird-proxy?lat=${lat}&lng=${lng}&dist=${dist}&mode=recent`);
+                const recentRes = await fetch(`/api/ebird-proxy?lat=${lat}&lng=${lng}&dist=${dist}&mode=recent&maxResults=10000`);
                 if (!recentRes.ok) throw new Error('eBird recent HTTP ' + recentRes.status);
                 const _t0notable = performance.now();
-                const notableRes = await fetch(`/api/ebird-proxy?lat=${lat}&lng=${lng}&dist=${dist}&mode=notable`);
+                const notableRes = await fetch(`/api/ebird-proxy?lat=${lat}&lng=${lng}&dist=${dist}&mode=notable&maxResults=10000`);
                 const _recentMs = Math.round(_t0notable - _t0recent);
                 const recentText = await recentRes.text();
                 if (!recentText.trim()) throw new Error('eBird recent: empty response from proxy');
