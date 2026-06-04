@@ -2029,6 +2029,13 @@
         function updateAiBubble() {
             const hasTargets = rawData.some(o => o.is_wanted);
             document.getElementById('aiBubble').classList.toggle('has-context', hasTargets);
+            const noScan = document.getElementById('aiNoScan');
+            if (noScan && rawData.length > 0) {
+                const targetCount = rawData.filter(o => o.is_wanted).length;
+                noScan.textContent = targetCount
+                    ? `${rawData.length} observations loaded — ${targetCount} 🎯 targets. Ask me anything!`
+                    : `${rawData.length} observations loaded. Ask me anything about your scan.`;
+            }
         }
 
         function renderAiRankList() {
