@@ -1734,20 +1734,20 @@
         let aiHistory = [];
         let aiRank = [...AI_DEFAULT_RANK];
 
-        function buildAiContext(truncate) {
+        function buildAiContext(maxInputTokens) {
             if (!rawData.length) return '';
-            const MAX_REGULAR = truncate ? 40 : Infinity; // cap only for models that need it
             const loc = userCoords;
             const locStr = loc
                 ? `${loc.name || 'GPS'} (${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)})`
                 : 'unknown';
 
-            let ctx = `YOUR LOCATION: ${locStr}\n`;
+            // prefix = location + life list (always sent)
+            let prefix = `YOUR LOCATION: ${locStr}\n`;
             if (fullLifeList.length) {
                 const seenCount = fullLifeList.filter(isSeen).length;
-                ctx += `LIFE LIST: ${seenCount}/${fullLifeList.length} seen · ${fullWantedList.length} targets remaining\n`;
+                prefix += `LIFE LIST: ${seenCount}/${fullLifeList.length} seen · ${fullWantedList.length} targets remaining\n`;
             }
-            ctx += '\n';
+            prefix += '\n';
 
             function fmtLine(o, fullDetail) {
                 const marker = o.is_wanted ? '🎯' : o.is_notable ? '⭐' : '•';
@@ -1759,23 +1759,53 @@
                 return `${marker} ${name}${sci}${date}${place}`;
             }
 
-            function renderSource(obs, label) {
-                if (!obs.length) return '';
-                const priority = obs.filter(o => o.is_wanted || o.is_notable);
-                const regular  = obs.filter(o => !o.is_wanted && !o.is_notable);
-                const shown    = regular.slice(0, MAX_REGULAR);
-                const clipped  = regular.length - shown.length;
-                let out = `${label} (${obs.length} total)\n`;
-                priority.forEach(o => { out += fmtLine(o, true)  + '\n'; });
-                shown.forEach(o =>    { out += fmtLine(o, false) + '\n'; });
-                if (clipped > 0) out += `(+ ${clipped} more common observations omitted)\n`;
-                return out + '\n';
+            const inatObs  = rawData.filter(o => o.source === 'iNat');
+            const ebirdObs = rawData.filter(o => o.source === 'eBird');
+
+            // Priority obs (🎯 targets + ⭐ notables) always included with full detail
+            const inatPriority  = inatObs.filter(o => o.is_wanted || o.is_notable);
+            const ebirdPriority = ebirdObs.filter(o => o.is_wanted || o.is_notable);
+            const inatRegular   = inatObs.filter(o => !o.is_wanted && !o.is_notable);
+            const ebirdRegular  = ebirdObs.filter(o => !o.is_wanted && !o.is_notable);
+
+            let inatFixed = inatObs.length  ? `iNaturalist – nearby community sightings by other people (${inatObs.length} total)\n`  : '';
+            let ebirdFixed = ebirdObs.length ? `eBird – nearby community sightings by other people (${ebirdObs.length} total)\n` : '';
+            inatPriority.forEach(o => { inatFixed  += fmtLine(o, true) + '\n'; });
+            ebirdPriority.forEach(o => { ebirdFixed += fmtLine(o, true) + '\n'; });
+
+            // Budget for regular • obs: total input token budget → chars, minus fixed content,
+            // minus 3000 chars (~750 tokens) reserved for system prompt base + conversation history.
+            // maxInputTokens comes from model registry (e.g. 9000 for Groq free-tier 12k TPM).
+            const fixedChars = prefix.length + inatFixed.length + ebirdFixed.length;
+            const regularBudgetChars = isFinite(maxInputTokens)
+                ? maxInputTokens * 4 - fixedChars - 3000
+                : Infinity;
+
+            // Fill regular obs from iNat then eBird until shared char budget is exhausted
+            let inatRegularBlock = '', ebirdRegularBlock = '';
+            let inatClipped = 0, ebirdClipped = 0;
+            let remaining = regularBudgetChars > 0 ? regularBudgetChars : 0;
+            for (const o of inatRegular) {
+                const line = fmtLine(o, false) + '\n';
+                if (line.length <= remaining) { inatRegularBlock += line; remaining -= line.length; }
+                else inatClipped++;
+            }
+            for (const o of ebirdRegular) {
+                const line = fmtLine(o, false) + '\n';
+                if (line.length <= remaining) { ebirdRegularBlock += line; remaining -= line.length; }
+                else ebirdClipped++;
             }
 
-            ctx += renderSource(rawData.filter(o => o.source === 'iNat'),
-                'iNaturalist – nearby community sightings by other people');
-            ctx += renderSource(rawData.filter(o => o.source === 'eBird'),
-                'eBird – nearby community sightings by other people');
+            let ctx = prefix;
+            if (inatObs.length) {
+                ctx += inatFixed + inatRegularBlock;
+                if (inatClipped > 0) ctx += `(+ ${inatClipped} more common observations omitted)\n`;
+                ctx += '\n';
+            }
+            if (ebirdObs.length) {
+                ctx += ebirdFixed + ebirdRegularBlock;
+                if (ebirdClipped > 0) ctx += `(+ ${ebirdClipped} more common observations omitted)\n`;
+            }
 
             return ctx.trim();
         }
@@ -1864,7 +1894,7 @@
         }
 
         function _aiBuildMessages(historySnapshot, model) {
-            const ctx = buildAiContext(model.truncate);
+            const ctx = buildAiContext(model.maxInputTokens || Infinity);
             const sys = `You are a helpful birding assistant for the NAM (Nature Around Me) app. The iNaturalist and eBird observations in the context are RECENT COMMUNITY SIGHTINGS by other people near the user's location — NOT the user's own observations. The user's personal data is only the life list and targets. Context key: 🎯 = target species the user wants to see (not yet on their life list) that has been spotted nearby; ⭐ = eBird notable (rare for this area); • = species the user has already seen. Answer concisely based on the context.${ctx ? '\n\nContext:\n' + ctx : ''}`;
             return [{ role: 'system', content: sys }, ...historySnapshot];
         }
