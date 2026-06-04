@@ -1705,6 +1705,89 @@
             cursor: not-allowed;
         }
 
+        /* ══ AI FAVORITES ══ */
+        .ai-fav-chips {
+            display: none;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 8px 12px 4px;
+            border-top: 1px solid var(--border);
+            background: var(--card-bg);
+        }
+
+        .ai-fav-chips.visible {
+            display: flex;
+        }
+
+        .ai-fav-chip {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 4px 8px 4px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-main);
+            max-width: 200px;
+            cursor: pointer;
+            transition: border-color 0.15s;
+        }
+
+        .ai-fav-chip:hover, .ai-fav-chip:active {
+            border-color: var(--link-blue);
+            color: var(--link-blue);
+        }
+
+        .ai-fav-chip-label {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        .ai-fav-del {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 10px;
+            cursor: pointer;
+            padding: 0 2px;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .ai-fav-del:hover {
+            color: var(--notable-red);
+        }
+
+        /* ── user bubble row: star + bubble ── */
+        .ai-msg-user-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 6px;
+            justify-content: flex-end;
+        }
+
+        .ai-star-btn {
+            background: none;
+            border: none;
+            font-size: 14px;
+            color: var(--text-dim);
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            flex-shrink: 0;
+            opacity: 0.5;
+            transition: opacity 0.15s, color 0.15s;
+        }
+
+        .ai-star-btn:hover, .ai-star-btn.saved {
+            opacity: 1;
+            color: #f59e0b;
+        }
+
         /* ══ AI KEY INPUTS (in settings) ══ */
         .ai-key-row {
             display: flex;

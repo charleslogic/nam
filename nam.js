@@ -1974,10 +1974,26 @@
 
             const msgArea = document.getElementById('aiMessages');
 
+            const userRow = document.createElement('div');
+            userRow.className = 'ai-msg-user-row';
+            const starBtn = document.createElement('button');
+            starBtn.className = 'ai-star-btn';
+            starBtn.dataset.q = question;
+            const alreadySaved = _aiFavs().includes(question);
+            starBtn.textContent = alreadySaved ? '★' : '☆';
+            if (alreadySaved) starBtn.classList.add('saved');
+            starBtn.title = 'Save question';
+            starBtn.addEventListener('click', () => {
+                _aiFavSave(question);
+                starBtn.textContent = '★';
+                starBtn.classList.add('saved');
+            });
             const userEl = document.createElement('div');
             userEl.className = 'ai-msg-user';
             userEl.textContent = question;
-            msgArea.appendChild(userEl);
+            userRow.appendChild(starBtn);
+            userRow.appendChild(userEl);
+            msgArea.appendChild(userRow);
 
             input.value = '';
             input.style.height = 'auto';
@@ -2131,6 +2147,55 @@
             } catch { /* silent */ }
         }
 
+        function _aiFavs() {
+            try { return JSON.parse(localStorage.getItem('nam_ai_favs') || '[]'); } catch { return []; }
+        }
+        function _aiFavSave(q) {
+            const favs = _aiFavs();
+            if (favs.includes(q)) return;
+            favs.unshift(q);
+            localStorage.setItem('nam_ai_favs', JSON.stringify(favs));
+            renderFavChips();
+        }
+        function _aiFavDelete(q) {
+            const favs = _aiFavs().filter(f => f !== q);
+            localStorage.setItem('nam_ai_favs', JSON.stringify(favs));
+            renderFavChips();
+            // un-star any visible bubble for this question
+            document.querySelectorAll('.ai-star-btn').forEach(btn => {
+                if (btn.dataset.q === q) { btn.textContent = '☆'; btn.classList.remove('saved'); }
+            });
+        }
+        function renderFavChips() {
+            const el = document.getElementById('aiFavChips');
+            if (!el) return;
+            const favs = _aiFavs();
+            el.classList.toggle('visible', favs.length > 0);
+            el.innerHTML = '';
+            favs.forEach(q => {
+                const chip = document.createElement('div');
+                chip.className = 'ai-fav-chip';
+                const label = document.createElement('span');
+                label.className = 'ai-fav-chip-label';
+                label.textContent = q.length > 45 ? q.slice(0, 45) + '…' : q;
+                label.title = q;
+                label.addEventListener('click', () => {
+                    const inp = document.getElementById('aiInput');
+                    inp.value = q;
+                    inp.dispatchEvent(new Event('input'));
+                    sendAiQuestion();
+                });
+                const del = document.createElement('button');
+                del.className = 'ai-fav-del';
+                del.textContent = '✕';
+                del.title = 'Remove';
+                del.addEventListener('click', e => { e.stopPropagation(); _aiFavDelete(q); });
+                chip.appendChild(label);
+                chip.appendChild(del);
+                el.appendChild(chip);
+            });
+        }
+
         function initAiKeys() {
             const pairs = [
                 ['aiKeyGemini',   'infer-key-gemini'],
@@ -2160,6 +2225,7 @@
         function initAi() {
             initAiKeys();
             loadAiRank();
+            renderFavChips();
 
             const aiHdr = document.getElementById('aiSettingsHeader');
             const aiContent = document.getElementById('aiSettingsContent');
