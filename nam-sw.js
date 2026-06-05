@@ -1,8 +1,8 @@
-// NAM! Service Worker v2.4.2
+// NAM! Service Worker v2.4.3
 // iOS PWA optimized + Leaflet-safe + offline-capable + activate-time LRU eviction
 
-const APP_CACHE   = 'nam-app-v2.4.2';
-const APP_VERSION = APP_CACHE.replace('nam-app-', ''); // 'v2.4.2'
+const APP_CACHE   = 'nam-app-v2.4.3';
+const APP_VERSION = APP_CACHE.replace('nam-app-', ''); // 'v2.4.3'
 const TILE_CACHE  = 'nam-tiles-v5';
 
 // Versioned URLs match what index.html requests — precache is actually hit on first visit.
