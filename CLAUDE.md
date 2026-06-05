@@ -149,11 +149,24 @@ AI keys are served to the browser by `api/infer-keys.js` and populate the key in
 
 ## Version Display & PWA
 
-`NAM_VERSION` in `index.html` and `APP_CACHE` in `nam-sw.js` must always match (e.g., both `v2.4.2`). Bump both together on every deploy — the version is the SW cache name, so mismatches cause stale JS to be served.
+`NAM_VERSION` in `index.html` and `APP_CACHE` in `nam-sw.js` must always match (e.g., both `v2.4.3`). Bump both together on every deploy — the version is the SW cache name, so mismatches cause stale JS to be served.
 
 The SW uses **stale-while-revalidate** for HTML, JS, and CSS: serves cached immediately, fetches fresh in background. A version bump forces a new cache key so updated files are fetched.
 
-Version is shown in the page title (`NAM! v2.4.2`) and `nam-config.js` also has an `APP_VERSION` constant — keep it in sync or remove it (it's informational only).
+Version is shown in the page title (`NAM! v2.4.3`) and `nam-config.js` also has an `APP_VERSION` constant — keep it in sync or remove it (it's informational only).
+
+## iOS PWA Safe Area
+
+The viewport meta uses `viewport-fit=cover` + `apple-mobile-web-app-status-bar-style: black-translucent`, which lets content extend edge-to-edge on iPhone. `nam.css` uses `env(safe-area-inset-*)` to keep UI elements clear of the status bar and home indicator:
+
+- **`.app-wrapper`** — `padding: max(20px, env(safe-area-inset-top)) 20px calc(120px + env(safe-area-inset-bottom)) 20px` — main scroll content clears both edges.
+- **`#navDock`, `#actionCircle`, `#aiBubble`** — fixed-bottom elements all add `env(safe-area-inset-bottom)` to their `bottom` value so they sit above the home indicator.
+- **`.ll-header`, `.ai-drawer-header`** — full-screen modals that start at `top: 0` pad their first row with `max(14px, calc(env(safe-area-inset-top) + 8px))`.
+- **`#llBody`, `.ai-input-row`** — bottom scroll/input areas add `env(safe-area-inset-bottom)` padding.
+- **`#galleryModal > div`** — inner div padding-top/bottom overridden in CSS (inline styles on the element); sticky header `top` also adjusted to `env(safe-area-inset-top)`.
+- **`#zoomCloseBtn`** — `top: max(20px, env(safe-area-inset-top))`.
+
+When adding new fixed-position or full-screen UI, always apply the same pattern. `env(safe-area-inset-top)` is 0 in regular Safari (browser handles it) and non-zero only in standalone PWA mode, so these rules are no-ops on desktop and in-browser.
 
 ## Hardcoded Location Chips
 
