@@ -553,7 +553,7 @@
         }
         function toggleTheme() { const t = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light'; document.documentElement.setAttribute('data-theme', t); localStorage.setItem('nam_theme', t); }
         let _favs = [];
-        function renderFavChips() {
+        function renderLocFavChips() {
             const el = document.getElementById('userFavChips'); if (!el) return;
             const sec = document.getElementById('userFavSection');
             if (!_favs.length) { el.innerHTML = ''; if (sec) sec.style.display = 'none'; return; }
@@ -567,7 +567,7 @@
                 const r = await fetch('/api/favorites');
                 if (!r.ok) return;
                 _favs = await r.json();
-                renderFavChips();
+                renderLocFavChips();
                 // One-time migration from localStorage
                 const stored = localStorage.getItem('nam_favorites');
                 if (stored) {
@@ -594,18 +594,18 @@
                 if (!r.ok) return false;
                 const [row] = await r.json();
                 _favs.unshift(row);
-                renderFavChips(); return true;
+                renderLocFavChips(); return true;
             } catch { return false; }
         }
         async function deleteFav(id) {
             try {
                 await fetch(`/api/favorites?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
                 _favs = _favs.filter(f => f.id !== id);
-                renderFavChips();
+                renderLocFavChips();
             } catch {}
         }
         function promptLocation() {
-            renderFavChips();   // show cached state immediately
+            renderLocFavChips();   // show cached state immediately
             fetchFavs();        // refresh in background (picks up changes from other devices)
             const inp = document.getElementById('locInput');
             const btn = document.getElementById('btnSaveFav');
