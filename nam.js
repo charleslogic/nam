@@ -11,6 +11,10 @@
                 if (e.data?.type === 'PRECACHE_DONE') {
                     dlog('SW precache done: ' + e.data.count + '/' + e.data.total + ' tiles', 'sw');
                 }
+                if (e.data?.type === 'SW_UPDATED') {
+                    // New app version activated — reload so stale JS doesn't persist
+                    window.location.reload();
+                }
             });
         }
 
@@ -481,10 +485,10 @@
             document.getElementById('locInput').addEventListener('input', e => {
                 document.getElementById('btnSaveFav').style.display = e.target.value.trim() ? '' : 'none';
             });
-            document.getElementById('btnSaveFav').addEventListener('click', () => {
+            document.getElementById('btnSaveFav').addEventListener('click', async () => {
                 const text = document.getElementById('locInput').value.trim(); if (!text) return;
-                const added = addFav(text);
                 const btn = document.getElementById('btnSaveFav');
+                const added = await addFav(text);
                 btn.textContent = added ? '✓ SAVED!' : '✓ ALREADY SAVED';
                 setTimeout(() => { btn.textContent = '★ SAVE AS FAVORITE'; }, 1500);
             });
