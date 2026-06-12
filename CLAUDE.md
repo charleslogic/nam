@@ -23,12 +23,12 @@ nam/
 ├── api/
 │   ├── ebird-proxy.js  — GET /api/ebird-proxy — proxies eBird API, keeps key server-side
 │   ├── favorites.js    — GET/POST/DELETE /api/favorites — shared saved locations (Supabase)
-│   ├── preferences.js  — GET/POST /api/preferences — key-value prefs (Supabase nam_prefs)
-│   └── infer-keys.js   — GET /api/infer-keys — returns AI API keys from server env vars
-└── vercel.json         — security headers
+│   └── preferences.js  — GET/POST /api/preferences — key-value prefs (Supabase nam_prefs)
+├── vercel.json         — security headers
+└── supabase-setup.sql  — run once in Supabase SQL editor to create nam_favorites/nam_prefs
 ```
 
-**4 serverless functions** (well within Vercel Hobby 12-function limit).
+**3 serverless functions** (well within Vercel Hobby 12-function limit).
 
 ## eBird Integration
 
@@ -138,14 +138,10 @@ Set in Vercel dashboard for the `nam` project:
 | `EBIRD_API_KEY` | eBird API key |
 | `SUPABASE_URL` | `https://nfvxmkknkxysjksyhbek.supabase.co` |
 | `SUPABASE_SERVICE_ROLE_KEY` | (from Supabase dashboard → Settings → API) |
-| `INFER_KEY_GEMINI` | Gemini API key (shared with infer project) |
-| `INFER_KEY_GROQ` | Groq API key (shared with infer project) |
-| `INFER_KEY_OPENROUTER` | OpenRouter API key (shared with infer project) |
-| `INFER_KEY_CEREBRAS` | Cerebras API key (shared with infer project) |
 
 Mapbox token (`MAPBOX_TOKEN`) is a public `pk.` token in `nam-config.js` — URL-restricted in the Mapbox dashboard (no env var needed).
 
-AI keys are served to the browser by `api/infer-keys.js` and populate the key inputs in ⚙ AI Settings. The localStorage key names (`infer-key-gemini` etc.) match infer, so keys entered in infer work in NAM automatically.
+AI keys are bring-your-own-key: users paste their own provider keys into ⚙ AI Settings, persisted in `localStorage` (`infer-key-gemini` etc.). The localStorage key names match infer, so keys entered in infer work in NAM automatically (same browser).
 
 ## Version Display & PWA
 

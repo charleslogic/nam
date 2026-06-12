@@ -2227,7 +2227,7 @@
                 ['aiKeyOR',       'infer-key-or'],
                 ['aiKeyCerebras', 'infer-key-cerebras'],
             ];
-            // Seed inputs from localStorage first
+            // Seed inputs from localStorage (shared key names with infer — BYOK)
             pairs.forEach(([elId, lsKey]) => {
                 const el = document.getElementById(elId);
                 if (!el) return;
@@ -2237,13 +2237,6 @@
                     if (v) localStorage.setItem(lsKey, v); else localStorage.removeItem(lsKey);
                 });
             });
-            // Overlay with server env vars (same names as infer — shared keys)
-            fetch('/api/infer-keys').then(r => r.ok ? r.json() : {}).then(k => {
-                if (k.gemini)     { const el = document.getElementById('aiKeyGemini');   if (el) el.value = k.gemini; }
-                if (k.groq)       { const el = document.getElementById('aiKeyGroq');     if (el) el.value = k.groq; }
-                if (k.openrouter) { const el = document.getElementById('aiKeyOR');       if (el) el.value = k.openrouter; }
-                if (k.cerebras)   { const el = document.getElementById('aiKeyCerebras'); if (el) el.value = k.cerebras; }
-            }).catch(() => {});
         }
 
         function initAi() {
